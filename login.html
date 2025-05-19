@@ -1,63 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login - Helpdesk</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f2f2f2;
-    }
-    .login-container {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 300px;
-    }
-    .login-container input,
-    .login-container button,
-    .login-container a {
-      width: 100%;
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      display: block;
-      text-decoration: none;
-      text-align: center;
-    }
-    .login-container a {
-      background-color: #e0e0e0;
-      color: black;
-      border-radius: 4px;
-    }
-  </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Login - Helpdesk</title>
+	<link rel="stylesheet" href="/style/login.css">
+	<script src="/scripts/login.js"></script>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Login</h2>
-    <form onsubmit="login(event)">
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Login</button>
-    </form>
-    <a href="reset-password.html">Reset Password</a>
-    <a href="#">Create Account</a>
-  </div>
-
-  <script>
-    function login(event) {
-      event.preventDefault();
-      const username = document.getElementById('username').value;
-      alert(`Attempted login with Username: ${username}`);
-      window.location.href = "index.html";
-    }
-  </script>
+    <div class="login-container">
+        <h2>Login</h2>
+        <form onsubmit="login(event)">
+            <input type="text" id="username" placeholder="Username" required />
+            <input type="password" id="password" placeholder="Password" required />
+            <button type="submit">Login</button>
+        </form>
+        <a href="reset-password.html">Reset Password</a>
+        <a href="#">Create Account</a>
+    </div>
 </body>
 </html>

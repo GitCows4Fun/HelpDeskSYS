@@ -1,61 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Create Account - Helpdesk</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f2f2f2;
-    }
-    .account-container {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 300px;
-    }
-    .account-container input,
-    .account-container button {
-      width: 100%;
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-    }
-  </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Create Account - Helpdesk</title>
+	<link rel="stylesheet" href="/style/ca.css">
+	<script src="/js/ca.js"></script>
 </head>
 <body>
-  <div class="account-container">
-    <h2>Create Account</h2>
-    <form onsubmit="createAccount(event)">
-      <input type="email" id="email" placeholder="Gmail Address" required pattern=".+@gmail\\.com" />
-      <input type="password" id="password" placeholder="Password" required />
-      <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
-      <button type="submit">Register</button>
-    </form>
-  </div>
-
-  <script>
-    function createAccount(event) {
-      event.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
-
-      if (password !== confirmPassword) {
-        alert('Passwords do not match!');
-        return;
-      }
-
-      alert(`Account created for ${email}`);
-      window.location.href = 'login.html';
-    }
-  </script>
+	<div class="account-container">
+		<h2>Create Account</h2>
+		<form onsubmit="createAccount(event)">
+			<input type="email" id="email" placeholder="Gmail Address" required pattern=".+@gmail\\.com" />
+			<input type="password" id="password" placeholder="Password" required />
+			<input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+			<button type="submit">Register</button>
+		</form>
+	</div>
 </body>
 </html>
