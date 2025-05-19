@@ -8,5 +8,5 @@ function createAccount(event) {
 		return;
 	}
 	alert(`Account created for ${email}`);
-	window.location.href = 'login.html';
+	window.location.href = '/login.html';
 }

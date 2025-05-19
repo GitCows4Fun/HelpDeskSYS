@@ -5,13 +5,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>Create Account - Helpdesk</title>
 	<link rel="stylesheet" href="/style/ca.css">
-	<script src="/js/ca.js"></script>
+	<script src="/scripts/ca.js"></script>
 </head>
 <body>
 	<div class="account-container">
 		<h2>Create Account</h2>
 		<form onsubmit="createAccount(event)">
-			<input type="email" id="email" placeholder="Gmail Address" required pattern=".+@gmail\\.com" />
+			<input type="email" id="email" placeholder="Email Address" required pattern="\w+(\.\w+){?}\@\w+\.\w+" />
 			<input type="password" id="password" placeholder="Password" required />
 			<input type="password" id="confirmPassword" placeholder="Confirm Password" required />
 			<button type="submit">Register</button>
