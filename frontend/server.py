@@ -1,7 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer 
 import ssl 
-# import subprocess; from os import path 
-from os import path 
+import subprocess; import os 
 import mimetypes
 
 WEB_ROOT = '../website'  # Directory where your HTML/CSS/JS lives
@@ -27,9 +26,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 		elif '.' not in self.path: 
 			# Serve static html files 
 			requested_path = f'{self.path.lstrip('/')}.html' 
-			file_path = path.join(WEB_ROOT, requested_path) 
+			file_path = os.path.join(WEB_ROOT, requested_path) 
 
-			if path.isfile(file_path): 
+			if os.path.isfile(file_path): 
 				self.send_response(200) 
 				mime_type, _ = mimetypes.guess_type(file_path) 
 				self.send_header('Content-type', mime_type or 'application/octet-stream') 
@@ -44,9 +43,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 		else: 
 			# Serve static files from /css, /js, etc. 
 			requested_path = self.path.lstrip('/') 
-			file_path = path.join(WEB_ROOT, requested_path) 
+			file_path = os.path.join(WEB_ROOT, requested_path) 
 
-			if path.isfile(file_path): 
+			if os.path.isfile(file_path): 
 				self.send_response(200) 
 				mime_type, _ = mimetypes.guess_type(file_path) 
 				self.send_header('Content-type', mime_type or 'application/octet-stream') 
@@ -80,8 +79,13 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-		context.load_cert_chain(certfile='../certs/server.pem', keyfile='../certs/server.key') 
+		certfile = '../certs/servercert.pem' 
+		keyfile = '../../serverkey.pem' 
+		# cert_chain = [{'certfile': certfile}
+		# 			,{'keyfile': keyfile}]
+
+		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER) 
+		context.load_cert_chain(certfile = certfile, keyfile = keyfile) 
 
 		port = 4443 
 		handler = RequestHandler 
