@@ -8,5 +8,5 @@ function resetPassword(event) {
 		return;
 	}
 	alert(`Password reset for ${username}`);
-	window.location.href = 'login.html';
+	window.location.href = 'login';
 }
