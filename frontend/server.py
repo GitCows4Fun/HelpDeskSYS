@@ -16,6 +16,14 @@ class RequestHandler(BaseHTTPRequestHandler):
 			with open('../website/index.html', 'r') as file: 
 				html_content = file.read().encode('utf-8') 
 				self.wfile.write(html_content) 
+		elif self.path == '/favicon.png': 
+			# favicon handler 
+			self.send_response(200) 
+			self.send_header('Content-Type', 'image/x-icon') 
+			self.end_headers() 
+			with open('../website/assets/graphics/favicon.png', 'rb') as favicon_file: 
+				favicon_data = favicon_file.read() 
+				self.wfile.write(favicon_data) 
 		elif '.' not in self.path: 
 			# Serve static html files 
 			requested_path = f'{self.path.lstrip('/')}.html' 
@@ -73,7 +81,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 def run(): 
 	try: 
 		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-		context.load_cert_chain(certfile='../certs/server.pem', keyfile='../certs/server.pem')
+		context.load_cert_chain(certfile='../certs/server.pem', keyfile='../certs/private.key') 
 
 		port = 4443
 		handler = RequestHandler 

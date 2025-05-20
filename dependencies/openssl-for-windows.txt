@@ -1,1 +1,3 @@
 https://slproweb.com/products/Win32OpenSSL.html
+
+only install if actually needed. most likely not-- 
