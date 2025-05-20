@@ -81,7 +81,7 @@ def run():
 		server.socket = context.wrap_socket(server.socket, server_side=True) 
 		
 		print(f"Server running on port {port} with SSL/TLS") 
-		print(f'Local: 127.0.0.1:8000') 
+		print(f'Local: 127.0.0.1:{port}') 
 		server.serve_forever() 
 	# except ssl.SSLError as e: 
 	# 	print(f"SSL Error: {e}") 
