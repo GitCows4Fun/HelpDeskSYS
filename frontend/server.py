@@ -1,5 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer 
-# import ssl 
+import ssl 
 # import subprocess; from os import path 
 from os import path 
 import mimetypes
@@ -9,7 +9,7 @@ WEB_ROOT = '../website'  # Directory where your HTML/CSS/JS lives
 class RequestHandler(BaseHTTPRequestHandler): 
 	def do_GET(self): 
 		# Serve index.html for root 
-		if self.path == '/' or '': 
+		if self.path == ('/' or ''): 
 			self.send_response(200) 
 			self.send_header('Content-type', 'text/html') 
 			self.end_headers() 
@@ -72,16 +72,13 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		port = 8000 
+		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+		context.load_cert_chain(certfile='../certs/server.pem', keyfile='../certs/server.pem')
+
+		port = 4443
 		handler = RequestHandler 
 		server = HTTPServer(('', port), handler) 
-		# server.socket = ssl.wrap_socket( 
-		# 	server.socket, 
-		# 	certfile='../certs/server.pem',  # Path to your certificate 
-		# 	server_side=True, 
-		# 	ssl_version=ssl.PROTOCOL_TLSv1_2, 
-		# 	keyfile='../certs/server.pem'  # If you have a separate key file, use it here 
-		# ) 
+		server.socket = context.wrap_socket(server.socket, server_side=True) 
 		
 		print(f"Server running on port {port} with SSL/TLS") 
 		print(f'Local: 127.0.0.1:8000') 
