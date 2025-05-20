@@ -81,9 +81,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 def run(): 
 	try: 
 		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-		context.load_cert_chain(certfile='../certs/server.pem', keyfile='../certs/private.key') 
+		context.load_cert_chain(certfile='../certs/server.pem', keyfile='../certs/server.key') 
 
-		port = 4443
+		port = 4443 
 		handler = RequestHandler 
 		server = HTTPServer(('', port), handler) 
 		server.socket = context.wrap_socket(server.socket, server_side=True) 
