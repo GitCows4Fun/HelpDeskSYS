@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import ssl 
 import subprocess; import os 
 import mimetypes
+from sys import argv as callargs
 
 WEB_ROOT = '../website'  # Directory where your HTML/CSS/JS lives
 
@@ -73,7 +74,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		if input("Run with TLS? (y/n) > ").lower()=="y":
+		if ((callargs[1] == ('y' or 'tls' or 'yes') if callargs.count(str)>1 else False) or input("Run with TLS? (y/n) > ").lower()=="y") == True:
 			port = 4443 
 			handler = RequestHandler 
 			server = HTTPServer(('', port), handler) 
