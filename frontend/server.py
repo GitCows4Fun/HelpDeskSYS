@@ -73,7 +73,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		if(((args[1]==('y'or'tls'or'yes')if args.count(str)>1 else False)or input("Use TLS? (y/n) > ").lower()=="y")==True)if(args.count(str)>1 and args[1]!=('no'or'n'))else False: 
+		if (args[1].lower()if len(args)>1 else input("Use TLS? (y/n) > ").strip().lower())in ("y", "yes", "tls"):
 			port = 4443 
 			handler = RequestHandler 
 			server = HTTPServer(('', port), handler) 
