@@ -58,14 +58,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 				self.end_headers() 
 				self.wfile.write(b"404 Not Found") 
 
-	# 	elif self.path == '/post': 
-	# 		self.send_response(200) 
-	# 		self.send_header('Content-type', 'text/html') 
-	# 		self.end_headers() 
-	# 		self.wfile.write(b"Hello, this is the POST endpoint!") 
-	
 	# def do_POST(self): 
-	# 	if self.path == '/post': 
+	# 	if self.path == 'api/post/': 
 	# 		content_length = int(self.headers['Content-Length']) 
 	# 		post_data = self.rfile.read(content_length) 
 	# 		self.send_response(200) 
@@ -79,23 +73,31 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		certfile = '../certs/server_chain.pem' 
-		keyfile = '../certs/serverkey.pem' 
-		issuercertfile = '../certs/issuercert.pem' 
-		# cert_chain = [{'certfile': certfile}
-		# 			,{'keyfile': keyfile}]
+		if input("Run with TLS? (y/n) > ").lower()=="y":
+			port = 4443 
+			handler = RequestHandler 
+			server = HTTPServer(('', port), handler) 
 
-		context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER) 
-		context.load_cert_chain(certfile = certfile, keyfile = keyfile) 
+			certchain = '../certs/server_chain.pem' 
+			keyfile = '../certs/serverkey.pem' 
 
-		port = 4443 
-		handler = RequestHandler 
-		server = HTTPServer(('', port), handler) 
-		server.socket = context.wrap_socket(server.socket, server_side=True) 
-		
-		print(f"Server running on port {port} with SSL/TLS") 
-		print(f'Local: 127.0.0.1:{port}') 
-		server.serve_forever() 
+			context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER) 
+			context.load_cert_chain(certfile = certchain, keyfile = keyfile) 
+
+			server.socket = context.wrap_socket(server.socket, server_side=True) 
+			print(f"Server running with SSL/TLS") 
+			print(f'Local: 127.0.0.1:{port}') 
+			server.serve_forever() 
+
+		else: 
+			port = 8000 
+			handler = RequestHandler 
+			server = HTTPServer(('', port), handler) 
+
+			print("Server running") 
+			print(f'Local: 127.0.0.1:{port}') 
+			server.serve_forever() 
+
 	# except ssl.SSLError as e: 
 	# 	print(f"SSL Error: {e}") 
 	except Exception as e: 
