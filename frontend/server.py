@@ -79,8 +79,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		certfile = '../certs/servercert.pem' 
-		keyfile = '../../serverkey.pem' 
+		certfile = '../certs/server_chain.pem' 
+		keyfile = '../certs/serverkey.pem' 
+		issuercertfile = '../certs/issuercert.pem' 
 		# cert_chain = [{'certfile': certfile}
 		# 			,{'keyfile': keyfile}]
 
