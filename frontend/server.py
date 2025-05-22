@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer 
 import ssl; import mimetypes 
-import subprocess; import os 
+import os; import subprocess 
 from sys import argv as args 
 
 WEB_ROOT = '../website'  # Directory where your HTML/CSS/JS lives
@@ -73,10 +73,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		if (args[1].lower()if len(args)>1 else input("Use TLS? (y/n) > ").strip().lower())in ("y", "yes", "tls"):
-			port = 4443 
+		SSLOn = True if (args[1].lower() if len(args) > 1 else input("Use TLS? (y/n) > ").strip().lower()) in ("y", "yes", "tls") else False 
+		portq = 4443 if SSLOn else 8008 
+		if (SSLOn):
 			handler = RequestHandler 
-			server = HTTPServer(('', port), handler) 
+			server = HTTPServer(('', portq), handler) 
 
 			certchain = '../certs/server_chain.pem' 
 			keyfile = '../certs/serverkey.pem' 
@@ -86,22 +87,22 @@ def run():
 
 			server.socket = context.wrap_socket(server.socket, server_side=True) 
 			print(f"Server running with SSL/TLS") 
-			print(f'Local: 127.0.0.1:{port}') 
+			print(f'Local: 127.0.0.1:{portq}') 
 			server.serve_forever() 
 
 		else: 
-			port = 8000 
 			handler = RequestHandler 
-			server = HTTPServer(('', port), handler) 
+			server = HTTPServer(('', portq), handler) 
 
 			print("Server running") 
-			print(f'Local: 127.0.0.1:{port}') 
+			print(f'Local: 127.0.0.1:{portq}') 
 			server.serve_forever() 
 
-	# except ssl.SSLError as e: 
-	# 	print(f"SSL Error: {e}") 
+	except ssl.SSLError as e: 
+		print(f"SSL Error: {e}") 
 	except Exception as e: 
 		print(f"Error: {e}") 
+
 
 if __name__ == "__main__": 
 	# # Create a self-signed certificate if you don't have one (for testing only) // only gonna work with openssl and even then prob only linux 
