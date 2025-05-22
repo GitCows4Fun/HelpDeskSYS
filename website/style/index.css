@@ -23,7 +23,6 @@ nav a {
 	background: #ddd;
 	color: #000;
 	border-radius: 4px;
-	cursor: pointer;
 }
 .tab {
 	display: none;

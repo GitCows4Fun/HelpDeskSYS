@@ -30,3 +30,6 @@ body {
 	color: black;
 	border-radius: 4px;
 }
+a {
+	cursor: pointer;
+}
