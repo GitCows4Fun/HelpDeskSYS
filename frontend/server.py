@@ -5,17 +5,30 @@ from sys import argv as args
 
 WEB_ROOT = '../website'  # Directory where your HTML/CSS/JS lives
 
-def postRequestHandler(endpoint = str(), data = bytes()): 
-	'' 
+class Interfacer():
+	def postRequestHandler(endpoint = str(), data = bytes()): 
+		target = endpoint.removeprefix('/api/0/POST/') 
+		match target: 
+			case _: '' 
+
+	def getRequestHandler(endpoint = str(), data = bytes()): 
+		target = endpoint.removeprefix('/api/0/GET/') 
+		match target: 
+			case 'data': '' #! Interface with sql db based on bytes(data) 
 
 class RequestHandler(BaseHTTPRequestHandler): 
 	def do_GET(self): 
-		if self.path.startswith('/api'):
+		if self.path.startswith('/api/0/GET/'):
+			content_length = int(self.headers['Content-Length']) 
+			get_data = self.rfile.read(content_length) 
+			self.send_response(200) if Interfacer.getRequestHandler(endpoint = self.path, data = get_data) else self.send_response(500); self.end_headers() 
+		elif self.path.startswith('/api'): 
 			self.send_response(418) 
 			self.end_headers() 
 			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee") 
-		else:
-		# Serve index.html for root 
+
+		else: 
+			# Serve index.html for root 
 			if self.path == ('/' or ''): 
 				self.send_response(200) 
 				self.send_header('Content-type', 'text/html') 
@@ -66,20 +79,19 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.end_headers() 
 					self.wfile.write(b"404 Not Found") 
 
-	def do_POST(self): # API Endpoints
-		match self.path.split('/'): #? /api/0/POST/%s 
-			case ['', 'api', '0', 'POST', *remaining]:
-				content_length = int(self.headers['Content-Length']) 
-				post_data = self.rfile.read(content_length) 
-				# self.send_response(200) 
-				# self.send_header('Content-type', 'text/html') 
-				# self.end_headers() 
-				# self.wfile.write(b"POST received: " + post_data) 
-				self.send_response(200) if postRequestHandler(endpoint = remaining, data = post_data) else self.send_response(500); self.end_headers() 
-			case _: 
-				self.send_response(418) 
-				self.end_headers() 
-				self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee") 
+	def do_POST(self): # API Endpoints 
+		if self.path.startswith('/api/0/POST'): 
+			content_length = int(self.headers['Content-Length']) 
+			post_data = self.rfile.read(content_length) 
+			# self.send_response(200) 
+			# self.send_header('Content-type', 'text/html') 
+			# self.end_headers() 
+			# self.wfile.write(b"POST received: " + post_data) 
+			self.send_response(200) if Interfacer.postRequestHandler(endpoint = self.path, data = post_data) else self.send_response(500); self.end_headers() 
+		else: 
+			self.send_response(418) 
+			self.end_headers() 
+			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee") 
 
 def run(): 
 	try: 
@@ -112,7 +124,6 @@ def run():
 		print(f"SSL Error: {e}") 
 	except Exception as e: 
 		print(f"Error: {e}") 
-
 
 if __name__ == "__main__": 
 	# # Create a self-signed certificate if you don't have one (for testing only) // only gonna work with openssl and even then prob only linux 
