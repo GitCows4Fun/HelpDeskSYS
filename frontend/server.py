@@ -58,18 +58,21 @@ class RequestHandler(BaseHTTPRequestHandler):
 				self.end_headers() 
 				self.wfile.write(b"404 Not Found") 
 
-	# def do_POST(self): 
-	# 	if self.path == 'api/post/': 
-	# 		content_length = int(self.headers['Content-Length']) 
-	# 		post_data = self.rfile.read(content_length) 
-	# 		self.send_response(200) 
-	# 		self.send_header('Content-type', 'text/html') 
-	# 		self.end_headers() 
-	# 		self.wfile.write(b"POST received: " + post_data) 
-	# 	else: 
-	# 		self.send_response(404) 
-	# 		self.end_headers() 
-	# 		self.wfile.write(b"Not Found") 
+	def do_POST(self): # API Endpoints
+		match self.path.split('/'): #? /api/0/POST/
+			case ['', 'api', '0', 'POST', *remaining]:
+				match remaining:
+					case _: ''
+				# content_length = int(self.headers['Content-Length']) 
+				# post_data = self.rfile.read(content_length) 
+				# self.send_response(200) 
+				# self.send_header('Content-type', 'text/html') 
+				# self.end_headers() 
+				# self.wfile.write(b"POST received: " + post_data) 
+			case _: 
+				self.send_response(418) 
+				self.end_headers() 
+				self.wfile.write(b"I'm a teapot<br>You asked a teapot to brew coffee") 
 
 def run(): 
 	try: 
