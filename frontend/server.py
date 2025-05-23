@@ -79,7 +79,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			case _: 
 				self.send_response(418) 
 				self.end_headers() 
-				self.wfile.write(b"I'm a teapot<br>You asked a teapot to brew coffee") 
+				self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee") 
 
 def run(): 
 	try: 
