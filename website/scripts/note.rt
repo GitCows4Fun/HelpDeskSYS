@@ -7,3 +7,6 @@ refer to /frontend/endpoints.map for all available endpoints.
 
 
 Add use of Cookies to save login data. begin with plaintext, cryptography comes later. 
+
+
+final idea: add use of ?tab=tickets on end of url to start index page at different tabs. logic should be done in server.py first. 
