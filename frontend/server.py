@@ -5,70 +5,77 @@ from sys import argv as args
 
 WEB_ROOT = '../website'  # Directory where your HTML/CSS/JS lives
 
+def postRequestHandler(endpoint = str(), data = bytes()): 
+	'' 
+
 class RequestHandler(BaseHTTPRequestHandler): 
 	def do_GET(self): 
+		if self.path.startswith('/api'):
+			self.send_response(418) 
+			self.end_headers() 
+			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee") 
+		else:
 		# Serve index.html for root 
-		if self.path == ('/' or ''): 
-			self.send_response(200) 
-			self.send_header('Content-type', 'text/html') 
-			self.end_headers() 
-			with open('../website/index.html', 'r') as file: 
-				html_content = file.read().encode('utf-8') 
-				self.wfile.write(html_content) 
-		elif self.path == '/favicon.png': 
-			# favicon handler 
-			self.send_response(200) 
-			self.send_header('Content-Type', 'image/x-icon') 
-			self.end_headers() 
-			with open('../website/assets/graphics/favicon.png', 'rb') as favicon_file: 
-				favicon_data = favicon_file.read() 
-				self.wfile.write(favicon_data) 
-		elif '.' not in self.path: 
-			# Serve static html files 
-			requested_path = f'{self.path.lstrip('/')}.html' 
-			file_path = os.path.join(WEB_ROOT, requested_path) 
-
-			if os.path.isfile(file_path): 
+			if self.path == ('/' or ''): 
 				self.send_response(200) 
-				mime_type, _ = mimetypes.guess_type(file_path) 
-				self.send_header('Content-type', mime_type or 'application/octet-stream') 
+				self.send_header('Content-type', 'text/html') 
 				self.end_headers() 
-				with open(file_path, 'rb') as f: 
-					self.wfile.write(f.read()) 
-			else: 
-				self.send_response(404) 
-				self.send_header('Content-type', 'text/plain') 
-				self.end_headers() 
-				self.wfile.write(b"404 Not Found") 
-		else: 
-			# Serve static files from /css, /js, etc. 
-			requested_path = self.path.lstrip('/') 
-			file_path = os.path.join(WEB_ROOT, requested_path) 
-
-			if os.path.isfile(file_path): 
+				with open('../website/index.html', 'r') as file: 
+					html_content = file.read().encode('utf-8') 
+					self.wfile.write(html_content) 
+			elif self.path == '/favicon.png': 
+				# favicon handler 
 				self.send_response(200) 
-				mime_type, _ = mimetypes.guess_type(file_path) 
-				self.send_header('Content-type', mime_type or 'application/octet-stream') 
+				self.send_header('Content-Type', 'image/x-icon') 
 				self.end_headers() 
-				with open(file_path, 'rb') as f: 
-					self.wfile.write(f.read()) 
+				with open('../website/assets/graphics/favicon.png', 'rb') as favicon_file: 
+					favicon_data = favicon_file.read() 
+					self.wfile.write(favicon_data) 
+			elif '.' not in self.path: 
+				# Serve static html files 
+				requested_path = f'{self.path.lstrip('/')}.html' 
+				file_path = os.path.join(WEB_ROOT, requested_path) 
+
+				if os.path.isfile(file_path): 
+					self.send_response(200) 
+					mime_type, _ = mimetypes.guess_type(file_path) 
+					self.send_header('Content-type', mime_type or 'application/octet-stream') 
+					self.end_headers() 
+					with open(file_path, 'rb') as f: 
+						self.wfile.write(f.read()) 
+				else: 
+					self.send_response(404) 
+					self.send_header('Content-type', 'text/plain') 
+					self.end_headers() 
+					self.wfile.write(b"404 Not Found") 
 			else: 
-				self.send_response(404) 
-				self.send_header('Content-type', 'text/plain') 
-				self.end_headers() 
-				self.wfile.write(b"404 Not Found") 
+				# Serve static files from /css, /js, etc. 
+				requested_path = self.path.lstrip('/') 
+				file_path = os.path.join(WEB_ROOT, requested_path) 
+
+				if os.path.isfile(file_path): 
+					self.send_response(200) 
+					mime_type, _ = mimetypes.guess_type(file_path) 
+					self.send_header('Content-type', mime_type or 'application/octet-stream') 
+					self.end_headers() 
+					with open(file_path, 'rb') as f: 
+						self.wfile.write(f.read()) 
+				else: 
+					self.send_response(404) 
+					self.send_header('Content-type', 'text/plain') 
+					self.end_headers() 
+					self.wfile.write(b"404 Not Found") 
 
 	def do_POST(self): # API Endpoints
-		match self.path.split('/'): #? /api/0/POST/
+		match self.path.split('/'): #? /api/0/POST/%s 
 			case ['', 'api', '0', 'POST', *remaining]:
-				match remaining:
-					case _: ''
-				# content_length = int(self.headers['Content-Length']) 
-				# post_data = self.rfile.read(content_length) 
+				content_length = int(self.headers['Content-Length']) 
+				post_data = self.rfile.read(content_length) 
 				# self.send_response(200) 
 				# self.send_header('Content-type', 'text/html') 
 				# self.end_headers() 
 				# self.wfile.write(b"POST received: " + post_data) 
+				self.send_response(200) if postRequestHandler(endpoint = remaining, data = post_data) else self.send_response(500); self.end_headers() 
 			case _: 
 				self.send_response(418) 
 				self.end_headers() 
