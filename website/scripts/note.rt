@@ -1,0 +1,9 @@
+Use api at /api/0/[POST or GET]/[data if fetching/adding tickets] - response will be json 
+Use POST/login for login - data sent should contain username and sha256 hashed password, and for future reference some diagnostic data -- not important though. 
+                                                    could be hashed too btw but use a key for that, eg a caesar cypher or smn.
+future goals will include salting hashes.
+
+refer to /frontend/endpoints.map for all available endpoints. 
+
+
+Add use of Cookies to save login data. begin with plaintext, cryptography comes later. 

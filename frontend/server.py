@@ -80,7 +80,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.wfile.write(b"404 Not Found") 
 
 	def do_POST(self): # API Endpoints 
-		if self.path.startswith('/api/0/POST'): 
+		if self.path.startswith('/api/0/POST/'): 
 			content_length = int(self.headers['Content-Length']) 
 			post_data = self.rfile.read(content_length) 
 			# self.send_response(200) 

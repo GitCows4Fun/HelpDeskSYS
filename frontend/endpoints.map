@@ -1,0 +1,5 @@
+POST 
+    _: 
+
+GET 
+    data                                # returns json of tickets. takes userid hash as input data for verification 
