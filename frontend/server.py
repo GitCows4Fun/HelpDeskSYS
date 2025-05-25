@@ -2,14 +2,37 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import ssl; import mimetypes 
 import os; import subprocess 
 from sys import argv as args 
+import json, random, time 
 
-WEB_ROOT = '../website'  # Directory where your HTML/CSS/JS lives
+WEB_ROOT = '../website'  # Directory where the HTML/CSS/JS/Assets lives
 
-class Interfacer():
+class SQLConnector(type = int(), data = str()): 
+	'' 
+
+class VerificationTracker:
+	global length, start, number, kmax, choices, keyArray 
+	length = 20; start = ''; number = 0; kmax = 2 
+	keyArray = [{'key':"",'initialTime': int()}*kmax] 
+	choices = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','!','#','%','&','@','$','=','>','<','^','*'] 
+	def newKey():
+		if number >= kmax-1: return False 
+		for i in range(length): 
+			start =+ random.choice(choices) 
+		keyArray[number]['key']=start; keyArray[number]['initialTime']=int(time.time); number =+ 1 
+		return number 
+	def checkKey(number = int()):
+		'' 
+
+class Intermediary():
 	def postRequestHandler(endpoint = str(), data = bytes()): 
 		target = endpoint.removeprefix('/api/0/POST/') 
 		match target: 
-			case _: '' 
+			case 'login': 
+				postd = json.loads(data.decode('utf-8')) 
+				username = postd.get('username') 
+				pw_hash = postd.get('password_hash') 
+				return True if SQLConnector.verifyLogin(username, pw_hash) else False 
 
 	def getRequestHandler(endpoint = str(), data = bytes()): 
 		target = endpoint.removeprefix('/api/0/GET/') 
@@ -21,7 +44,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 		if self.path.startswith('/api/0/GET/'):
 			content_length = int(self.headers['Content-Length']) 
 			get_data = self.rfile.read(content_length) 
-			self.send_response(200) if Interfacer.getRequestHandler(endpoint = self.path, data = get_data) else self.send_response(500); self.end_headers() 
+			self.send_response(200) if Intermediary.getRequestHandler(endpoint = self.path, data = get_data) else self.send_response(500); self.end_headers() 
 		elif self.path.startswith('/api'): 
 			self.send_response(418) 
 			self.end_headers() 
@@ -87,7 +110,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			# self.send_header('Content-type', 'text/html') 
 			# self.end_headers() 
 			# self.wfile.write(b"POST received: " + post_data) 
-			self.send_response(200) if Interfacer.postRequestHandler(endpoint = self.path, data = post_data) else self.send_response(500); self.end_headers() 
+			self.send_response(200) if Intermediary.postRequestHandler(endpoint = self.path, data = post_data) else self.send_response(401); self.end_headers() 
 		else: 
 			self.send_response(418) 
 			self.end_headers() 

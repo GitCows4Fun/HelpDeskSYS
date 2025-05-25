@@ -10,3 +10,22 @@ Add use of Cookies to save login data. begin with plaintext, cryptography comes 
 
 
 final idea: add use of ?tab=tickets on end of url to start index page at different tabs. logic should be done in server.py first. 
+
+
+for the endpoints set up, login might want to do smn like:
+//# const username = encodeURIComponent("user123");
+//# const hashedPass = "md5hashedpassword";
+//# fetch('http://localhost:8000', {
+//#     method: 'POST',
+//#     headers: {
+//#         'Content-Type': 'application/json'
+//#     },
+//#     body: JSON.stringify({
+//#         username: username,
+//#         password_hash: hashedPass 
+//#     })
+//# })
+//# .then(response => response.json())
+//# .then(data => {
+//#     console.log(data);
+//# });
