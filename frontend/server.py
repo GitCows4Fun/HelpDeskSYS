@@ -1,8 +1,14 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer; import ssl; import mimetypes; import os; import subprocess; from sys import argv; import json, random, time, mysql.connector 
+from http.server import BaseHTTPRequestHandler, HTTPServer; import ssl; import mimetypes; import os; from sys import argv; import json, random, time, mysql.connector 
+from sqlvalidator.sql_validator import parse as SQLParse 
 WEB_ROOT = '../website' 
 
 class SQLConnector(): 
 	DB_CONFIGS = [{'host':'localhost','user':'root','password':'','database':'tickets'}, {'host':'localhost','user':'root','password':'','database':'users'}] 
+	
+	def SQLINJECTIONCHECK(string: str): 
+		return True if SQLParse(string).is_valid else False 
+
+	'' 
 
 class VerificationTracker:
 	global length, number, kmax, choices, keyArray, timeout 

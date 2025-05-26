@@ -2,7 +2,7 @@ POST
 	login                               # attempt a login. takes u/n and hashed passw as data. returns 200 Okay for correct login, and 401 Unauthorized if not 
 												secondary return: userid + auto-generated key. used for authing the connection // timeout of ~5min for demo 
 												after timeout returns 401 to EVERYTHING. 
-	data                                # post a new ticket to db. takes a list of title and description + state as well as userid hash []=str()*4 
+	data                                # post a new ticket to db. takes a list of title and description + state as well as userid hash [str()*2, bool, str()] 
 
 GET 
 	data                                # returns json of tickets. takes key hash as input data for verification 
@@ -15,3 +15,5 @@ RETURN CODES
 	401:	Unauthorized request or expired login key 
 	418:	Wrong endpoint for request 
 	400:	Request is incomplete/incorrect 
+	201:	Creation of ticket was succesful 
+	403:	Forbidden = SQL Injection stopped. 
