@@ -1,21 +1,22 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer; import ssl; import mimetypes 
 import os; from sys import argv; import json, random, time, mysql.connector 
 from sqlvalidator.sql_validator import parse as SQLParse 
+from adduser import addUser 
 WEB_ROOT = '../website' 
 
 class SQLConnector(): 
-	DB_CONFIGS = [{'host':'localhost','user':'root','password':'','database':'tickets'}, {'host':'localhost','user':'root','password':'','database':'users'}] 
+	DB_CONFIG = {'host':'localhost','user':'root','password':'','database':'ticketdb'} 
 	
 	def SQLINJECTIONCHECK(string: str): 
 		return [False, 403] if SQLParse(string).is_valid else [True, 202] 
 
 	@staticmethod 
-	def validateLogin(username: str, password_hash: str):
+	def validateLogin(email: str, password_hash: str):
 		try: 
-			testU = SQLConnector.SQLINJECTIONCHECK(username); testP = SQLConnector.SQLINJECTIONCHECK(password_hash) 
+			testU = SQLConnector.SQLINJECTIONCHECK(email); testP = SQLConnector.SQLINJECTIONCHECK(password_hash) 
 			if not testU[0]: return testU 
 			if not testP[0]: return testP 
-			connection = mysql.connector.connect(**SQLConnector.DB_CONFIGS[1]) 
+			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
 			cursor = connection.cursor() 
 			with open('../backend/userfetch.sql') as script:
 				cursor.execute(script) 
@@ -23,18 +24,18 @@ class SQLConnector():
 				cursor.close(); connection.close(); script.close() 
 			users = [] 
 			for row in data:
-				temp = str(row).strip().removeprefix("(").removesuffix(")").split(',') 
-				print(f"temp: {temp}")
-				users.append({'username':temp[0],'userid':temp[1],'pw_hash':temp[2]}) 
+				temp = str(row).strip().removeprefix('(').removesuffix(')').replace(' ','').split(',') 
+				print(f"temp: {temp}") 
+				users.append({'userid':temp[0],'commonName':temp[1],'email':temp[2],'pw_hash':temp[3]}) 
 			for i in range(len(users)): 
-				if username == users[i]['username'] and password_hash == users[i]['pw_hash']: 
+				if email == users[i]['email'] and password_hash == users[i]['pw_hash']: 
 					return [True, 200, users[i]['userid']] 
-			return [False, 400]
+			return [False, 400] 
 		except Exception as e: print(str(e)); return [False, 500] 
 
 	@staticmethod
 	def getTickets(): 
-		connection = mysql.connector.connect(**SQLConnector.DB_CONFIGS[1]) 
+		connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
 		cursor = connection.cursor() 
 		with open('../backend/ticketfetch.sql') as script: 
 			cursor.execute(script) 
