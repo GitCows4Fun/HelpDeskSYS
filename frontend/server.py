@@ -15,7 +15,7 @@ class VerificationTracker:
 	@staticmethod 
 	def newKey(userid: int):
 		if number >= kmax-1: return False 
-		start = ''.join(random.choices(choices, k=length))
+		start = ''.join(random.choices(choices, k=length)) 
 		keyArray[number] = { 
 			'key': start,
 			'initialTime': int(time.time()), 
