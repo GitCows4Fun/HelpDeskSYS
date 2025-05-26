@@ -32,8 +32,17 @@ class SQLConnector():
 			return [False, 400]
 		except Exception as e: print(str(e)); return [False, 500] 
 
+	@staticmethod
+	def getTickets(): 
+		connection = mysql.connector.connect(**SQLConnector.DB_CONFIGS[1]) 
+		cursor = connection.cursor() 
+		with open('../backend/ticketfetch.sql') as script: 
+			cursor.execute(script) 
+			data = cursor.fetchall() 
+			cursor.close; connection.close(); script.close() 
+		
+
 class VerificationTracker: 
-	global kmax, keyArray, timeout 
 	length = 20; number = 0; kmax = 2 
 	keyArray = [{'key':"",'initialTime': 0} for _ in range(kmax)] 
 	choices = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
@@ -42,9 +51,9 @@ class VerificationTracker:
 
 	@staticmethod 
 	def newKey(userid: int):
-		if VerificationTracker.number >= kmax-1: return False 
+		if VerificationTracker.number >= VerificationTracker.kmax-1: return False 
 		start = ''.join(random.choice(VerificationTracker.choices, k=VerificationTracker.length)) 
-		keyArray[VerificationTracker.number] = { 
+		VerificationTracker.keyArray[VerificationTracker.number] = { 
 			'key': start, 
 			'initialTime': int(time.time()), 
 			'uid': userid 
@@ -53,9 +62,9 @@ class VerificationTracker:
 	
 	@staticmethod 
 	def checkKeyValidity(key: str): 
-		for x in range(len(keyArray)): 
-			if key == keyArray[x]['key']: 
-				if abs(keyArray[x]['initialTime']%int(time.time))<timeout: 
+		for x in range(len(VerificationTracker.keyArray)): 
+			if key == VerificationTracker.keyArray[x]['key']: 
+				if abs(VerificationTracker.keyArray[x]['initialTime']%int(time.time))<VerificationTracker.timeout: 
 					return True 
 		return False 
 
@@ -68,26 +77,25 @@ class Intermediary():
 			pw_hash = postd.get('password_hash') 
 			user = SQLConnector.validateLogin(username, pw_hash) 
 			if not user[0]: return user 
-			return [user[0], user[1], [{'key':keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [False, 400] 
+			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [False, 400] 
 		else: 
 			postd = json.loads(data.decode('utf-8')) 
-			key = postd.get('key') 
-			if VerificationTracker.checkKeyValidity(key):
+			if VerificationTracker.checkKeyValidity(postd.get('key')): 
 				match target:
 					case 'ticket': '' 
 
 	def getRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/GET/') 
 		getd = json.loads(data.decode('utf-8')) 
-		if VerificationTracker.checkKeyValidity(getd.get('key')):
+		if VerificationTracker.checkKeyValidity(getd.get('key')): 
 			match target: 
 				case 'data': #! Interface with sql db based on bytes(data) 
 					ticketdata = SQLConnector.getTickets() # dict 
-					return [True, 200, ticketdata]
+					return [True, 200, ticketdata] 
 
 class RequestHandler(BaseHTTPRequestHandler): 
 	def do_GET(self): # API Endpoints 
-		if self.path.startswith('/api/0/GET/'):
+		if self.path.startswith('/api/0/GET/'): 
 			try: content_length = int(self.headers['Content-Length']) 
 			except Exception: self.send_response(411); self.end_headers(); return 
 			get_data = self.rfile.read(content_length) 
