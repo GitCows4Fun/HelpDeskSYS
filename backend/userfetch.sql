@@ -1,2 +1,2 @@
-use `ticketdb`;
-select * from `users`;
+use `ticketdb`; 
+select * from `users`; 

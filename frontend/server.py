@@ -1,50 +1,69 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer 
-import ssl; import mimetypes 
-import os; import subprocess 
-from sys import argv as args 
-import json, random, time 
+from http.server import BaseHTTPRequestHandler, HTTPServer; import ssl; import mimetypes; import os; import subprocess; from sys import argv; import json, random, time, mysql.connector 
+WEB_ROOT = '../website' 
 
-WEB_ROOT = '../website'  # Directory where the HTML/CSS/JS/Assets lives
-
-class SQLConnector(type = int(), data = str()): 
-	'' 
+class SQLConnector(): 
+	DB_CONFIGS = [{'host':'localhost','user':'root','password':'','database':'tickets'}, {'host':'localhost','user':'root','password':'','database':'users'}] 
 
 class VerificationTracker:
-	global length, start, number, kmax, choices, keyArray 
-	length = 20; start = ''; number = 0; kmax = 2 
-	keyArray = [{'key':"",'initialTime': int()}*kmax] 
+	global length, number, kmax, choices, keyArray, timeout 
+	length = 20; number = 0; kmax = 2 
+	keyArray = [{'key':"",'initialTime': 0} for _ in range(kmax)] 
 	choices = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
 		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','!','#','%','&','@','$','=','>','<','^','*'] 
-	def newKey():
+	timeout = 60*5 # 5 min in seconds 
+
+	@staticmethod 
+	def newKey(userid: int):
 		if number >= kmax-1: return False 
-		for i in range(length): 
-			start =+ random.choice(choices) 
-		keyArray[number]['key']=start; keyArray[number]['initialTime']=int(time.time); number =+ 1 
+		start = ''.join(random.choices(choices, k=length))
+		keyArray[number] = { 
+			'key': start,
+			'initialTime': int(time.time()), 
+			'uid': userid 
+		}; number += 1 
 		return number 
-	def checkKey(number = int()):
-		'' 
+	
+	@staticmethod 
+	def checkKeyValidity(key: str): 
+		for x in range(len(keyArray)): 
+			if key == keyArray[x]['key']: 
+				if abs(keyArray[x]['initialTime']%int(time.time))<timeout: 
+					return True 
+		return False 
 
 class Intermediary():
-	def postRequestHandler(endpoint = str(), data = bytes()): 
+	def postRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/POST/') 
-		match target: 
-			case 'login': 
-				postd = json.loads(data.decode('utf-8')) 
-				username = postd.get('username') 
-				pw_hash = postd.get('password_hash') 
-				return True if SQLConnector.verifyLogin(username, pw_hash) else False 
+		if target == 'login': 
+			postd = json.loads(data.decode('utf-8')) 
+			username = postd.get('username') 
+			pw_hash = postd.get('password_hash') 
+			user = SQLConnector.verifyLogin(username, pw_hash) 
+			return [True, 200, keyArray[VerificationTracker.newKey(user[1])]['key']] if user[0] else [False, 401] 
+		else: 
+			postd = json.loads(data.decode('utf-8')) 
+			key = postd.get('key') 
+			if VerificationTracker.checkKeyValidity(key):
+				match target:
+					case 'ticket': '' 
 
-	def getRequestHandler(endpoint = str(), data = bytes()): 
+	def getRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/GET/') 
-		match target: 
-			case 'data': '' #! Interface with sql db based on bytes(data) 
+		getd = json.loads(data.decode('utf-8')) 
+		if VerificationTracker.checkKeyValidity(getd.get('key')):
+			match target: 
+				case 'data': #! Interface with sql db based on bytes(data) 
+					ticketdata = SQLConnector.getTickets() 
+					return [True, 200, ticketdata]
 
 class RequestHandler(BaseHTTPRequestHandler): 
-	def do_GET(self): 
+	def do_GET(self): # API Endpoints 
 		if self.path.startswith('/api/0/GET/'):
 			content_length = int(self.headers['Content-Length']) 
 			get_data = self.rfile.read(content_length) 
-			self.send_response(200) if Intermediary.getRequestHandler(endpoint = self.path, data = get_data) else self.send_response(500); self.end_headers() 
+			response = Intermediary.getRequestHandler(endpoint = self.path, data = get_data) 
+			self.send_response(response[1]); self.send_header('Content-Type', 'application/json'); self.end_headers(); 
+			self.wfile.write(response[2].encode('utf-8')) if len(response) >=3 else 0; return 
 		elif self.path.startswith('/api'): 
 			self.send_response(418) 
 			self.end_headers() 
@@ -118,7 +137,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(): 
 	try: 
-		SSLOn = True if (args[1].lower() if len(args) > 1 else input("Use TLS? (y/n) > ").strip().lower()) in ("y", "yes", "tls") else False 
+		SSLOn = True if (argv[1].lower() if len(argv) > 1 else input("Use TLS? (y/n) > ").strip().lower()) in ("y", "yes", "tls") else False 
 		portq = 4443 if SSLOn else 8008 
 		if (SSLOn):
 			handler = RequestHandler 

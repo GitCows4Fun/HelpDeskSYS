@@ -14,3 +14,4 @@ RETURN CODES
 	500:	Server requested is down 
 	401:	Unauthorized request or expired login key 
 	418:	Wrong endpoint for request 
+	400:	Request is incomplete/incorrect 
