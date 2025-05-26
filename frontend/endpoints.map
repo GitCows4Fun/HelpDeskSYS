@@ -1,7 +1,7 @@
 POST 
-	login                               # attempt a login. takes u/n and hashed passw as data. returns 200 Okay for correct login, and 401 Unauthorized if not 
+	login                               # attempt a login. takes email and hashed passw as data. returns 200 Okay for correct login, and 401 Unauthorized if not 
 												secondary return: userid + auto-generated key. used for authing the connection // timeout of ~5min for demo 
-												after timeout returns 401 to EVERYTHING. 
+												after timeout return 401 to EVERYTHING. 
 	data                                # post a new ticket to db. takes a list of title and description + state as well as userid hash [str()*2, bool, str()] 
 
 GET 

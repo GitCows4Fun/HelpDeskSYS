@@ -1,0 +1,6 @@
+start wampserver64
+launch mysql workbench 8.0 CE 
+connect to localhost wampserver 
+open model in this folder or open db_structure.sql 
+forward engineer or execute script 
+remember to remove 'VISIBLE' in auto-generated forward engineer script 
