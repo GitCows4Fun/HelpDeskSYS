@@ -9,11 +9,17 @@ GET
 
 
 RETURN CODES 
-	200:    Query successful 
-	404:    Requested resource not found 
-	500:	Server requested is down 
-	401:	Unauthorized request or expired login key 
-	418:	Wrong endpoint for request 
-	400:	Request is incomplete/incorrect 
-	201:	Creation of ticket was succesful 
-	403:	Forbidden = SQL Injection stopped. 
+	Success 
+		200:    Query successful 
+		201:	Creation of ticket was succesful 
+		202:	Query accepted [No sql injection detected/] 
+	
+	Failure 
+		400:	Request is incomplete/incorrect 
+		401:	Unauthorized request or expired login key 
+		403:	Forbidden = SQL Injection stopped. 
+		404:    Requested resource not found 
+		405:	Method not allowed for request type 
+		411:	Content length missing 
+		418:	Wrong endpoint for request 
+		500:	Server requested is down 

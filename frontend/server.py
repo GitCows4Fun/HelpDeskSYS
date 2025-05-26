@@ -1,4 +1,5 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer; import ssl; import mimetypes; import os; from sys import argv; import json, random, time, mysql.connector 
+from http.server import BaseHTTPRequestHandler, HTTPServer; import ssl; import mimetypes 
+import os; from sys import argv; import json, random, time, mysql.connector 
 from sqlvalidator.sql_validator import parse as SQLParse 
 WEB_ROOT = '../website' 
 
@@ -6,12 +7,33 @@ class SQLConnector():
 	DB_CONFIGS = [{'host':'localhost','user':'root','password':'','database':'tickets'}, {'host':'localhost','user':'root','password':'','database':'users'}] 
 	
 	def SQLINJECTIONCHECK(string: str): 
-		return True if SQLParse(string).is_valid else False 
+		return [False, 403] if SQLParse(string).is_valid else [True, 202] 
 
-	'' 
+	@staticmethod 
+	def validateLogin(username: str, password_hash: str):
+		try: 
+			testU = SQLConnector.SQLINJECTIONCHECK(username); testP = SQLConnector.SQLINJECTIONCHECK(password_hash) 
+			if not testU[0]: return testU 
+			if not testP[0]: return testP 
+			connection = mysql.connector.connect(**SQLConnector.DB_CONFIGS[1]) 
+			cursor = connection.cursor() 
+			with open('../backend/userfetch.sql') as script:
+				cursor.execute(script) 
+				data = cursor.fetchall() 
+				cursor.close(); connection.close(); script.close() 
+			users = [] 
+			for row in data:
+				temp = str(row).strip().removeprefix("(").removesuffix(")").split(',') 
+				print(f"temp: {temp}")
+				users.append({'username':temp[0],'userid':temp[1],'pw_hash':temp[2]}) 
+			for i in range(len(users)): 
+				if username == users[i]['username'] and password_hash == users[i]['pw_hash']: 
+					return [True, 200, users[i]['userid']] 
+			return [False, 400]
+		except Exception as e: print(str(e)); return [False, 500] 
 
-class VerificationTracker:
-	global length, number, kmax, choices, keyArray, timeout 
+class VerificationTracker: 
+	global kmax, keyArray, timeout 
 	length = 20; number = 0; kmax = 2 
 	keyArray = [{'key':"",'initialTime': 0} for _ in range(kmax)] 
 	choices = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
@@ -20,14 +42,14 @@ class VerificationTracker:
 
 	@staticmethod 
 	def newKey(userid: int):
-		if number >= kmax-1: return False 
-		start = ''.join(random.choices(choices, k=length)) 
-		keyArray[number] = { 
-			'key': start,
+		if VerificationTracker.number >= kmax-1: return False 
+		start = ''.join(random.choice(VerificationTracker.choices, k=VerificationTracker.length)) 
+		keyArray[VerificationTracker.number] = { 
+			'key': start, 
 			'initialTime': int(time.time()), 
 			'uid': userid 
-		}; number += 1 
-		return number 
+		}; VerificationTracker.number += 1 
+		return VerificationTracker.number 
 	
 	@staticmethod 
 	def checkKeyValidity(key: str): 
@@ -44,8 +66,9 @@ class Intermediary():
 			postd = json.loads(data.decode('utf-8')) 
 			username = postd.get('username') 
 			pw_hash = postd.get('password_hash') 
-			user = SQLConnector.verifyLogin(username, pw_hash) 
-			return [True, 200, keyArray[VerificationTracker.newKey(user[1])]['key']] if user[0] else [False, 401] 
+			user = SQLConnector.validateLogin(username, pw_hash) 
+			if not user[0]: return user 
+			return [user[0], user[1], [{'key':keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [False, 400] 
 		else: 
 			postd = json.loads(data.decode('utf-8')) 
 			key = postd.get('key') 
@@ -59,17 +82,19 @@ class Intermediary():
 		if VerificationTracker.checkKeyValidity(getd.get('key')):
 			match target: 
 				case 'data': #! Interface with sql db based on bytes(data) 
-					ticketdata = SQLConnector.getTickets() 
+					ticketdata = SQLConnector.getTickets() # dict 
 					return [True, 200, ticketdata]
 
 class RequestHandler(BaseHTTPRequestHandler): 
 	def do_GET(self): # API Endpoints 
 		if self.path.startswith('/api/0/GET/'):
-			content_length = int(self.headers['Content-Length']) 
+			try: content_length = int(self.headers['Content-Length']) 
+			except Exception: self.send_response(411); self.end_headers(); return 
 			get_data = self.rfile.read(content_length) 
 			response = Intermediary.getRequestHandler(endpoint = self.path, data = get_data) 
 			self.send_response(response[1]); self.send_header('Content-Type', 'application/json'); self.end_headers(); 
-			self.wfile.write(response[2].encode('utf-8')) if len(response) >=3 else 0; return 
+			if len(response) >=3: self.wfile.write(response[2].encode('utf-8')) 
+			return 
 		elif self.path.startswith('/api'): 
 			self.send_response(418) 
 			self.end_headers() 
@@ -129,17 +154,18 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 	def do_POST(self): # API Endpoints 
 		if self.path.startswith('/api/0/POST/'): 
-			content_length = int(self.headers['Content-Length']) 
+			try: content_length = int(self.headers['Content-Length']) 
+			except Exception: self.send_response(411); self.end_headers(); return 
 			post_data = self.rfile.read(content_length) 
-			# self.send_response(200) 
 			# self.send_header('Content-type', 'text/html') 
-			# self.end_headers() 
-			# self.wfile.write(b"POST received: " + post_data) 
-			self.send_response(200) if Intermediary.postRequestHandler(endpoint = self.path, data = post_data) else self.send_response(401); self.end_headers() 
+			response = Intermediary.postRequestHandler(endpoint = self.path, data = post_data) 
+			self.send_response(response[1]); self.send_header('Content-Type', 'application/json'); self.end_headers() 
+			if len(response)<3: self.wfile.write(response[2].encode('utf-8')) 
+			return 
 		else: 
 			self.send_response(418) 
 			self.end_headers() 
-			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee") 
+			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee"); return 
 
 def run(): 
 	try: 
