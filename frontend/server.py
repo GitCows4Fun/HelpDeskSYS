@@ -2,41 +2,74 @@ from http.server import BaseHTTPRequestHandler, HTTPServer; from math import tru
 import ssl; import mimetypes 
 import os; from sys import argv; import json, random, time, mysql.connector 
 from sqlvalidator.sql_validator import parse as SQLParse 
-from adduser import addUser 
+# from adduser import addUser 
+import re 
 WEB_ROOT = '../website' 
 
 class SQLConnector(): 
-	DB_CONFIG = {'host':'localhost','user':'root','password':'','database':'ticketdb'} 
-	
-	@staticmethod 
-	def SQLINJECTIONCHECK(string: str): 
-		return [False, 403] if SQLParse(string).is_valid else [True, 202] 
+	DB_CONFIG = {'host':'127.0.0.1','user':'root','password':'','database':'ticketdb'} 
+	EMAIL_REGEX = r'^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})*$' 
+	SQL_RESTRICTED = { 
+		'chars': [';', '\\', '*', '`', '$', '#', '!', '{', '}', '(', ')'], 
+		'keywords': ['EXEC', 'SELECT', 'WHERE', 'LIKE', 'HAVING', 'OFFSET', 'INSERT', 'DELETE', 'CREATE', 'DROP', 'GRANT', 'REVOKE'] 
+	} 
 
 	@staticmethod 
-	def validateLogin(email: str, password_hash: str):
+	def SQLINJECTIONCHECK(string: str): 
+		has_restricted = SQLConnector.HasSQLChars(string)
+		is_valid_sql = SQLParse(string).is_valid() 
+		if is_valid_sql or has_restricted:
+			return [False, 403] 
+		else:
+			return [True, 202] 
+
+	@staticmethod 
+	def EmailIsValid(email: str) -> bool: 
+		if not re.match(SQLConnector.EMAIL_REGEX, email): 
+			return False 
+		return not SQLConnector.HasSQLChars(email) 
+		# return True 
+
+	@staticmethod 
+	def HasSQLChars(string: str) -> bool: 
+		string_lower = string.lower()
+		for char in SQLConnector.SQL_RESTRICTED['chars']: 
+			if char in string: 
+				return True 
+		for kw in SQLConnector.SQL_RESTRICTED['keywords']: 
+			if kw.lower() in string_lower.split():
+				return True 
+		return False 
+
+	@staticmethod 
+	def validateLogin(email: str, password_hash: str): 
 		try: 
-			testU = SQLConnector.SQLINJECTIONCHECK(email); testP = SQLConnector.SQLINJECTIONCHECK(password_hash) 
-			if not testU[0]: return testU 
-			if not testP[0]: return testP 
+			testP = SQLConnector.SQLINJECTIONCHECK(password_hash) 
+			testE = SQLConnector.EmailIsValid(email) 
+			if not testP[0]: 
+				return testP 
+			if not testE: 
+				return [False, 403] 
 			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
 			cursor = connection.cursor() 
 			with open('../backend/userfetch.sql') as script:
-				cursor.execute(str(script)) 
+				sql = script.read() 
+				cursor.execute(sql) 
 				data = cursor.fetchall() 
 				cursor.close(); connection.close(); script.close() 
 			users = [] 
 			for row in data:
-				temp = str(row).strip().removeprefix('(').removesuffix(')').replace(' ','').split(',') 
+				temp = ''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split(',') 
 				print(f"temp: {temp}") 
 				users.append({'userid':temp[0],'commonName':temp[1],'email':temp[2],'pw_hash':temp[3]}) 
 			for i in range(len(users)): 
 				if email == users[i]['email'] and password_hash == users[i]['pw_hash']: 
 					return [True, 200, users[i]['userid']] 
 			return [False, 400] 
-		except ConnectionError: return [False, 500] 
-		except mysql.connector.Error: return [False, 500] 
-		except IndexError or TypeError or ValueError: return [False, 400] 
-		except Exception: return [False, 404] 
+		except ConnectionError as e: print(str(e)); return [False, 500] 
+		except mysql.connector.Error as e: print(str(e)); return [False, 500] 
+		except IndexError or TypeError or ValueError as e: print(str(e)); return [False, 400] 
+		except Exception as e: print(str(e)); return [False, 404] 
 
 	@staticmethod 
 	def getTickets(): 
@@ -44,12 +77,13 @@ class SQLConnector():
 			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
 			cursor = connection.cursor() 
 			with open('../backend/ticketfetch.sql') as script: 
-				cursor.execute(str(script)) 
+				sql = script.read() 
+				cursor.execute(str(sql)) 
 				data = cursor.fetchall() 
 				cursor.close; connection.close(); script.close() 
 			tickets = [] 
 			for row in data: 
-				temp = str(row).strip().removeprefix('(').removesuffix(')').replace(' ','').split(',') 
+				temp = ''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split(',') 
 				print(f"temp: {temp}") 
 				tickets.append({'ticketID':int(temp[0]), 'userID':int(temp[1]), 'title':temp[2], 'description':temp[3]}) 
 			return [True, 200, tickets] 
@@ -85,7 +119,7 @@ class VerificationTracker:
 					return [True, 202, {'userid_hash':VerificationTracker.keyArray[x]['uid']}] 
 		return [False, 401] 
 
-class Intermediary(str):
+class apiHandler(str):
 	@staticmethod
 	def postRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/POST/') 
@@ -93,10 +127,10 @@ class Intermediary(str):
 			postd = json.loads(data.decode('utf-8')) 
 			email = postd.get('email') 
 			pw_hash = postd.get('password_hash') 
-			teste = SQLConnector.SQLINJECTIONCHECK(email) 
+			teste = SQLConnector.EmailIsValid(email) 
 			testph = SQLConnector.SQLINJECTIONCHECK(pw_hash) 
-			if not teste[0]: return teste 
-			elif not testph[0]: return testph 
+			if not teste: print('E: '+email);print(teste); return teste 
+			elif not testph[0]: print('P: '+pw_hash);print(testph); return testph 
 			user = SQLConnector.validateLogin(email, pw_hash) 
 			if not user[0]: return user 
 			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
@@ -120,7 +154,7 @@ class Intermediary(str):
 					ticketdata = SQLConnector.getTickets() # dict 
 					if not ticketdata[0]:
 						return 
-					return [True, 200, ticketdata] 
+					return [True, 200, ticketdata[2]] 
 
 class RequestHandler(BaseHTTPRequestHandler): 
 	def do_GET(self): # API Endpoints 
@@ -128,13 +162,13 @@ class RequestHandler(BaseHTTPRequestHandler):
 			try: content_length = int(self.headers['Content-Length']) 
 			except Exception: self.send_response(411); self.end_headers(); return 
 			get_data = self.rfile.read(content_length) 
-			response = Intermediary.getRequestHandler(endpoint = self.path, data = get_data) 
+			response = apiHandler.getRequestHandler(endpoint = self.path, data = get_data) 
 			self.send_response(response[1]) 
 			self.send_header('Content-Type', 'application/json') 
-			response_size = len(response[2].encode('utf-8')) if len(response) >= 3 else 0 
+			response_size = len((response[2]).encode('utf-8')) if len(response) >= 3 else 0 
 			self.send_header('Content-length', str(response_size)) 
 			self.end_headers(); 
-			if len(response) >=3: self.wfile.write(response[2].encode('utf-8')) 
+			if len(response) >=3: self.wfile.write((response[2]).encode('utf-8')) 
 			return 
 		elif self.path.startswith('/api'): 
 			self.send_response(418) 
@@ -210,9 +244,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 			except Exception: self.send_response(411); self.end_headers(); return 
 			post_data = self.rfile.read(content_length) 
 			# self.send_header('Content-type', 'text/html') 
-			response = Intermediary.postRequestHandler(endpoint = self.path, data = post_data) 
+			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data) 
 			self.send_response(response[1]); self.send_header('Content-Type', 'application/json'); self.end_headers() 
-			if len(response)<3: self.wfile.write(response[2].encode('utf-8')) 
+			if len(response)>3: self.wfile.write(response[2].encode('utf-8')) 
 			return 
 		else: 
 			self.send_response(418) 
