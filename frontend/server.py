@@ -7,6 +7,7 @@ WEB_ROOT = '../website'
 class SQLConnector(): 
 	DB_CONFIG = {'host':'localhost','user':'root','password':'','database':'ticketdb'} 
 	
+	@staticmethod 
 	def SQLINJECTIONCHECK(string: str): 
 		return [False, 403] if SQLParse(string).is_valid else [True, 202] 
 
@@ -33,32 +34,37 @@ class SQLConnector():
 			return [False, 400] 
 		except Exception as e: print(str(e)); return [False, 500] 
 
-	@staticmethod
+	@staticmethod 
 	def getTickets(): 
-		connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
-		cursor = connection.cursor() 
-		with open('../backend/ticketfetch.sql') as script: 
-			cursor.execute(script) 
-			data = cursor.fetchall() 
-			cursor.close; connection.close(); script.close() 
-		
+		try:
+			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
+			cursor = connection.cursor() 
+			with open('../backend/ticketfetch.sql') as script: 
+				cursor.execute(script) 
+				data = cursor.fetchall() 
+				cursor.close; connection.close(); script.close() 
+		except ConnectionError: return [False, 500] 
+		except mysql.connector.Error: return [False, 500] 
+		except IndexError or TypeError or ValueError: return [False, 400] 
+		except Exception: return [False, 404] 
 
 class VerificationTracker: 
 	length = 20; number = 0; kmax = 2 
-	keyArray = [{'key':"",'initialTime': 0} for _ in range(kmax)] 
+	keyArray = [{'key':"",'initialTime': 0, 'uid':0} for _ in range(kmax)] 
 	choices = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
 		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','!','#','%','&','@','$','=','>','<','^','*'] 
 	timeout = 60*5 # 5 min in seconds 
 
 	@staticmethod 
 	def newKey(userid: int):
-		if VerificationTracker.number >= VerificationTracker.kmax-1: return False 
+		if VerificationTracker.number >= VerificationTracker.kmax-2: return False 
+		VerificationTracker.number += 1 
 		start = ''.join(random.choice(VerificationTracker.choices, k=VerificationTracker.length)) 
 		VerificationTracker.keyArray[VerificationTracker.number] = { 
 			'key': start, 
 			'initialTime': int(time.time()), 
 			'uid': userid 
-		}; VerificationTracker.number += 1 
+		} 
 		return VerificationTracker.number 
 	
 	@staticmethod 
@@ -66,22 +72,28 @@ class VerificationTracker:
 		for x in range(len(VerificationTracker.keyArray)): 
 			if key == VerificationTracker.keyArray[x]['key']: 
 				if abs(VerificationTracker.keyArray[x]['initialTime']%int(time.time))<VerificationTracker.timeout: 
-					return True 
-		return False 
+					return [True, 202, {'userid_hash':VerificationTracker.keyArray[x]['uid']}] 
+		return [False, 401] 
 
 class Intermediary():
 	def postRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/POST/') 
 		if target == 'login': 
 			postd = json.loads(data.decode('utf-8')) 
-			username = postd.get('username') 
+			email = postd.get('email') 
 			pw_hash = postd.get('password_hash') 
-			user = SQLConnector.validateLogin(username, pw_hash) 
+			teste = SQLConnector.SQLINJECTIONCHECK(email) 
+			testph = SQLConnector.SQLINJECTIONCHECK(pw_hash) 
+			if not teste[0]: return teste 
+			elif not testph[0]: return testph 
+			user = SQLConnector.validateLogin(email, pw_hash) 
 			if not user[0]: return user 
-			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [False, 400] 
+			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
 		else: 
 			postd = json.loads(data.decode('utf-8')) 
-			if VerificationTracker.checkKeyValidity(postd.get('key')): 
+			testd = SQLConnector.SQLINJECTIONCHECK(postd.get('key')) 
+			if not testd[0]: return testd 
+			if VerificationTracker.checkKeyValidity(postd.get('key'))[0]: 
 				match target:
 					case 'ticket': '' 
 
@@ -89,9 +101,13 @@ class Intermediary():
 		target = endpoint.removeprefix('/api/0/GET/') 
 		getd = json.loads(data.decode('utf-8')) 
 		if VerificationTracker.checkKeyValidity(getd.get('key')): 
+			testD = SQLConnector.SQLINJECTIONCHECK(data) 
+			if not testD[0]: return testD 
 			match target: 
 				case 'data': #! Interface with sql db based on bytes(data) 
 					ticketdata = SQLConnector.getTickets() # dict 
+					if not ticketdata[0]:
+						return 
 					return [True, 200, ticketdata] 
 
 class RequestHandler(BaseHTTPRequestHandler): 
@@ -101,11 +117,16 @@ class RequestHandler(BaseHTTPRequestHandler):
 			except Exception: self.send_response(411); self.end_headers(); return 
 			get_data = self.rfile.read(content_length) 
 			response = Intermediary.getRequestHandler(endpoint = self.path, data = get_data) 
-			self.send_response(response[1]); self.send_header('Content-Type', 'application/json'); self.end_headers(); 
+			self.send_response(response[1]) 
+			self.send_header('Content-Type', 'application/json') 
+			response_size = len(response[2].encode('utf-8')) if len(response) >= 3 else 0 
+			self.send_header('Content-length', str(response_size)) 
+			self.end_headers(); 
 			if len(response) >=3: self.wfile.write(response[2].encode('utf-8')) 
 			return 
 		elif self.path.startswith('/api'): 
 			self.send_response(418) 
+			self.send_header('Content-length', '0') 
 			self.end_headers() 
 			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee") 
 
@@ -114,16 +135,20 @@ class RequestHandler(BaseHTTPRequestHandler):
 			if self.path == ('/' or ''): 
 				self.send_response(200) 
 				self.send_header('Content-type', 'text/html') 
+				file_size = os.path.getsize(WEB_ROOT+'/index.html') 
+				self.send_header('Content-length', str(file_size)) 
 				self.end_headers() 
-				with open('../website/index.html', 'r') as file: 
+				with open(WEB_ROOT+'/index.html', 'r') as file: 
 					html_content = file.read().encode('utf-8') 
 					self.wfile.write(html_content) 
 			elif self.path == '/favicon.png': 
 				# favicon handler 
 				self.send_response(200) 
 				self.send_header('Content-Type', 'image/x-icon') 
+				file_size = os.path.getsize(WEB_ROOT+'/assets/graphics/favicon.png') 
+				self.send_header('Content-length', str(file_size)) 
 				self.end_headers() 
-				with open('../website/assets/graphics/favicon.png', 'rb') as favicon_file: 
+				with open(WEB_ROOT+'/assets/graphics/favicon.png', 'rb') as favicon_file: 
 					favicon_data = favicon_file.read() 
 					self.wfile.write(favicon_data) 
 			elif '.' not in self.path: 
@@ -135,12 +160,15 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.send_response(200) 
 					mime_type, _ = mimetypes.guess_type(file_path) 
 					self.send_header('Content-type', mime_type or 'application/octet-stream') 
+					file_size = os.path.getsize(file_path)
+					self.send_header('Content-length', str(file_size)) 
 					self.end_headers() 
 					with open(file_path, 'rb') as f: 
 						self.wfile.write(f.read()) 
 				else: 
 					self.send_response(404) 
 					self.send_header('Content-type', 'text/plain') 
+					self.send_header('Content-length', '0') 
 					self.end_headers() 
 					self.wfile.write(b"404 Not Found") 
 			else: 
@@ -152,12 +180,15 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.send_response(200) 
 					mime_type, _ = mimetypes.guess_type(file_path) 
 					self.send_header('Content-type', mime_type or 'application/octet-stream') 
+					file_size = os.path.getsize(file_path)
+					self.send_header('Content-length', str(file_size)) 
 					self.end_headers() 
 					with open(file_path, 'rb') as f: 
 						self.wfile.write(f.read()) 
 				else: 
 					self.send_response(404) 
 					self.send_header('Content-type', 'text/plain') 
+					self.send_header('Content-length', '0') 
 					self.end_headers() 
 					self.wfile.write(b"404 Not Found") 
 
@@ -175,6 +206,42 @@ class RequestHandler(BaseHTTPRequestHandler):
 			self.send_response(418) 
 			self.end_headers() 
 			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee"); return 
+
+	def do_HEAD(self): # Last required method 
+		if '.' not in self.path: 
+			# Static html files 
+			requested_path = f'{self.path.lstrip('/')}.html' 
+			file_path = os.path.join(WEB_ROOT, requested_path) 
+
+			if os.path.isfile(file_path): 
+				self.send_response(200) 
+				mime_type, _ = mimetypes.guess_type(file_path) 
+				self.send_header('Content-type', mime_type or 'application/octet-stream') 
+				file_size = os.path.getsize(file_path)
+				self.send_header('Content-length', str(file_size)) 
+				self.end_headers() 
+			else: 
+				self.send_response(404) 
+				self.send_header('Content-type', 'text/plain') 
+				self.send_header('Content-length', '0') 
+				self.end_headers() 
+		else: 
+			# Static files from /css, /js, etc. 
+			requested_path = self.path.lstrip('/') 
+			file_path = os.path.join(WEB_ROOT, requested_path) 
+
+			if os.path.isfile(file_path): 
+				self.send_response(200) 
+				mime_type, _ = mimetypes.guess_type(file_path) 
+				self.send_header('Content-type', mime_type or 'application/octet-stream') 
+				file_size = os.path.getsize(file_path)
+				self.send_header('Content-length', str(file_size)) 
+				self.end_headers() 
+			else: 
+				self.send_response(404) 
+				self.send_header('Content-type', 'text/plain') 
+				self.send_header('Content-length', '0') 
+				self.end_headers()
 
 def run(): 
 	try: 
