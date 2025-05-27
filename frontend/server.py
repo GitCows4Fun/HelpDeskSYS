@@ -1,4 +1,5 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer; import ssl; import mimetypes 
+from http.server import BaseHTTPRequestHandler, HTTPServer; from math import trunc
+import ssl; import mimetypes 
 import os; from sys import argv; import json, random, time, mysql.connector 
 from sqlvalidator.sql_validator import parse as SQLParse 
 from adduser import addUser 
@@ -20,7 +21,7 @@ class SQLConnector():
 			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
 			cursor = connection.cursor() 
 			with open('../backend/userfetch.sql') as script:
-				cursor.execute(script) 
+				cursor.execute(str(script)) 
 				data = cursor.fetchall() 
 				cursor.close(); connection.close(); script.close() 
 			users = [] 
@@ -32,7 +33,10 @@ class SQLConnector():
 				if email == users[i]['email'] and password_hash == users[i]['pw_hash']: 
 					return [True, 200, users[i]['userid']] 
 			return [False, 400] 
-		except Exception as e: print(str(e)); return [False, 500] 
+		except ConnectionError: return [False, 500] 
+		except mysql.connector.Error: return [False, 500] 
+		except IndexError or TypeError or ValueError: return [False, 400] 
+		except Exception: return [False, 404] 
 
 	@staticmethod 
 	def getTickets(): 
@@ -40,9 +44,15 @@ class SQLConnector():
 			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG) 
 			cursor = connection.cursor() 
 			with open('../backend/ticketfetch.sql') as script: 
-				cursor.execute(script) 
+				cursor.execute(str(script)) 
 				data = cursor.fetchall() 
 				cursor.close; connection.close(); script.close() 
+			tickets = [] 
+			for row in data: 
+				temp = str(row).strip().removeprefix('(').removesuffix(')').replace(' ','').split(',') 
+				print(f"temp: {temp}") 
+				tickets.append({'ticketID':int(temp[0]), 'userID':int(temp[1]), 'title':temp[2], 'description':temp[3]}) 
+			return [True, 200, tickets] 
 		except ConnectionError: return [False, 500] 
 		except mysql.connector.Error: return [False, 500] 
 		except IndexError or TypeError or ValueError: return [False, 400] 
@@ -59,7 +69,7 @@ class VerificationTracker:
 	def newKey(userid: int):
 		if VerificationTracker.number >= VerificationTracker.kmax-2: return False 
 		VerificationTracker.number += 1 
-		start = ''.join(random.choice(VerificationTracker.choices, k=VerificationTracker.length)) 
+		start = ''.join(random.choice(VerificationTracker.choices)*VerificationTracker.length) 
 		VerificationTracker.keyArray[VerificationTracker.number] = { 
 			'key': start, 
 			'initialTime': int(time.time()), 
@@ -71,11 +81,12 @@ class VerificationTracker:
 	def checkKeyValidity(key: str): 
 		for x in range(len(VerificationTracker.keyArray)): 
 			if key == VerificationTracker.keyArray[x]['key']: 
-				if abs(VerificationTracker.keyArray[x]['initialTime']%int(time.time))<VerificationTracker.timeout: 
+				if abs(VerificationTracker.keyArray[x]['initialTime']%int(time.time()))<VerificationTracker.timeout: 
 					return [True, 202, {'userid_hash':VerificationTracker.keyArray[x]['uid']}] 
 		return [False, 401] 
 
-class Intermediary():
+class Intermediary(str):
+	@staticmethod
 	def postRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/POST/') 
 		if target == 'login': 
@@ -97,11 +108,12 @@ class Intermediary():
 				match target:
 					case 'ticket': '' 
 
+	@staticmethod 
 	def getRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/GET/') 
 		getd = json.loads(data.decode('utf-8')) 
 		if VerificationTracker.checkKeyValidity(getd.get('key')): 
-			testD = SQLConnector.SQLINJECTIONCHECK(data) 
+			testD = SQLConnector.SQLINJECTIONCHECK(getd.get('key')) 
 			if not testD[0]: return testD 
 			match target: 
 				case 'data': #! Interface with sql db based on bytes(data) 
