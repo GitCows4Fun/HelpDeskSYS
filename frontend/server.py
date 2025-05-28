@@ -88,7 +88,8 @@ class SQLConnector():
 			users = [] 
 			for row in data:
 				temp = ''.join(''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split("'")).split(',') 
-				print(f"temp: {temp}"); logger(temp, "Login data") 
+				# print(f"temp: {temp}") 
+				logger(temp, "Login data") 
 				users.append({'userid':temp[0],'commonName':temp[1],'email':temp[2],'pw_hash':temp[3]}) 
 			for i in range(len(users)): 
 				if email == users[i]['email'] and password_hash == users[i]['pw_hash']: 
@@ -112,7 +113,8 @@ class SQLConnector():
 			tickets = [] 
 			for row in data: 
 				temp = ''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split(',') 
-				print(f"temp: {temp}") 
+				# print(f"temp: {temp}") 
+				logger(temp, "Ticket GET data") 
 				tickets.append({'ticketID':int(temp[0]), 'userID':int(temp[1]), 'title':temp[2], 'description':temp[3]}) 
 			return [True, 200, tickets] 
 		except ConnectionError: return [False, 500] 
@@ -124,7 +126,7 @@ class VerificationTracker:
 	length = 20; number = 0; kmax = 2 
 	keyArray = [{'key':"",'initialTime': 0, 'uid':0} for _ in range(kmax)] 
 	choices = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','!','#','%','&','@','$','=','>','<','^','*'] 
+		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','%','&','@','=','>','<','^'] 
 	timeout = 60*5 # 5 min in seconds 
 
 	@staticmethod 
@@ -218,10 +220,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 			response = apiHandler.getRequestHandler(endpoint = self.path, data = get_data) 
 			self.send_response(response[1]) 
 			self.send_header('Content-Type', 'application/json') 
-			response_size = len((response[2]).encode('utf-8')) if len(response) >= 3 else 0 
+			response_size = len(str(response[2])) if len(response) >= 3 else 0 
 			self.send_header('Content-length', str(response_size)) 
 			self.end_headers(); 
-			if len(response) >=3: self.wfile.write((response[2]).encode('utf-8')) 
+			if len(response) >=3: self.wfile.write(str(response[2]).encode('utf-8')) 
 			return 
 		elif self.path.startswith('/api'): 
 			self.send_response(418) 
@@ -291,23 +293,32 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.end_headers() 
 					self.wfile.write(b"404 Not Found") 
 
-	def do_POST(self): # API Endpoints 
-		logger(self, "Raw request data") 
-		if self.path.startswith('/api/0/POST/'): 
-			try: content_length = int(self.headers['Content-Length']) 
-			except Exception: self.send_response(411); self.end_headers(); return 
-			post_data = self.rfile.read(content_length) 
-			# self.send_header('Content-type', 'text/html') 
-			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data) 
-			self.send_response(response[1]); self.send_header('Content-Type', 'application/json') 
-			if len(response)>3: self.send_header('Content-Length', len(str(response))) 
-			self.end_headers() 
-			if len(response)>3: self.wfile.write(response[2].encode('utf-8')) 
-			return 
-		else: 
-			self.send_response(418) 
-			self.end_headers() 
-			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee"); return 
+	def do_POST(self):
+		logger(self, "Raw request data")
+		if self.path.startswith('/api/0/POST/'):
+			try:
+				content_length = int(self.headers['Content-Length'])
+			except Exception:
+				self.send_response(411)
+				self.end_headers()
+				return
+			post_data = self.rfile.read(content_length)
+			response = apiHandler.postRequestHandler(endpoint=self.path, data=post_data)
+			self.send_response(response[1])
+			self.send_header('Content-Type', 'application/json')
+			if len(response) >= 3:
+				body = json.dumps(response[2]).encode('utf-8')
+				self.send_header('Content-Length', str(len(body)))
+			else:
+				body = b''
+				self.send_header('Content-Length', '0')
+			self.end_headers()
+			if body:
+				self.wfile.write(body)
+		else:
+			self.send_response(418)
+			self.end_headers()
+			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee")
 
 	def do_HEAD(self): # Last required method 
 		logger(self, "Raw request data") 
