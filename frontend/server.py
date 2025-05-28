@@ -1,9 +1,9 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer; from math import trunc
 import ssl; import mimetypes 
-import os; from sys import argv; import json, random, time, mysql.connector 
+import os; from sys import argv; import json, random, mysql.connector 
 from sqlvalidator.sql_validator import parse as SQLParse 
 # from adduser import addUser 
-import re 
+import re; from datetime import datetime; from time import time 
 WEB_ROOT = '../website' 
 
 class SQLConnector(): 
@@ -101,32 +101,45 @@ class VerificationTracker:
 
 	@staticmethod 
 	def newKey(userid: int):
-		if VerificationTracker.number >= VerificationTracker.kmax-2: return False 
-		VerificationTracker.number += 1 
-		start = ''.join(random.choice(VerificationTracker.choices)*VerificationTracker.length) 
+		if VerificationTracker.number >= VerificationTracker.kmax: return False 
+		start = ''.join(random.choice(VerificationTracker.choices) for _ in range(VerificationTracker.length)) 
 		VerificationTracker.keyArray[VerificationTracker.number] = { 
 			'key': start, 
-			'initialTime': int(time.time()), 
+			'initialTime': int(time()), 
 			'uid': userid 
 		} 
-		return VerificationTracker.number 
-	
+		try: 
+			with open('./userauth.log', 'a') as log: 
+				current_time = datetime.datetime.now().strftime("%d %B %Y, %I:%M%p") 
+				log_entry = f"{current_time}\nVerification Key: {VerificationTracker.keyArray[VerificationTracker.number]}\n{'-' * 50}\n" 
+				log.write(log_entry) 
+		except Exception as e: 
+			print(f"Error logging user activity: {str(e)}") 
+		finally: log.close() 
+		VerificationTracker.number += 1 
+		return True 
+
 	@staticmethod 
 	def checkKeyValidity(key: str): 
 		for x in range(len(VerificationTracker.keyArray)): 
 			if key == VerificationTracker.keyArray[x]['key']: 
-				if abs(VerificationTracker.keyArray[x]['initialTime']%int(time.time()))<VerificationTracker.timeout: 
+				if abs(int(time()) - VerificationTracker.keyArray[x]['initialTime']) < VerificationTracker.timeout: 
 					return [True, 202, {'userid_hash':VerificationTracker.keyArray[x]['uid']}] 
+				else: 
+					VerificationTracker.keyArray[x] = {'key': "", 'initialTime': 0, 'uid': 0} 
+					VerificationTracker.number -= 1 
 		return [False, 401] 
 
 class apiHandler(str):
 	@staticmethod
 	def postRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/POST/') 
+		postd = json.loads(data.decode('utf-8')) 
 		if target == 'login': 
-			postd = json.loads(data.decode('utf-8')) 
-			email = postd.get('email') 
-			pw_hash = postd.get('password_hash') 
+			try: 
+				email = postd.get('email') 
+				pw_hash = postd.get('password_hash') 
+			except Exception: return [False, 400] 
 			teste = SQLConnector.EmailIsValid(email) 
 			testph = SQLConnector.SQLINJECTIONCHECK(pw_hash) 
 			if not teste: print('E: '+email);print(teste); return teste 
