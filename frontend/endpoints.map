@@ -23,3 +23,4 @@ RETURN CODES
 		411:	Content length missing 
 		418:	Wrong endpoint for request 
 		500:	Server requested is down 
+		507:	New key cannot be created (Login metric) 

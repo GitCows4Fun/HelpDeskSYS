@@ -128,17 +128,28 @@ class VerificationTracker:
 	timeout = 60*5 # 5 min in seconds 
 
 	@staticmethod 
-	def newKey(userid: int):
-		if VerificationTracker.number >= VerificationTracker.kmax: return False 
+	def newKey(userid: int): 
+		current_time = int(time()) 
+		for i in range(VerificationTracker.kmax): 
+			entry = VerificationTracker.keyArray[i] 
+			if entry['key'] and (current_time - entry['initialTime']) >= VerificationTracker.timeout: 
+				VerificationTracker.keyArray[i] = {'key': "", 'initialTime': 0, 'uid': 0} 
+				if VerificationTracker.number > 0: 
+					VerificationTracker.number -= 1 
+		if VerificationTracker.number >= VerificationTracker.kmax: 
+			return None 
 		start = ''.join(random.choice(VerificationTracker.choices) for _ in range(VerificationTracker.length)) 
-		VerificationTracker.keyArray[VerificationTracker.number] = { 
-			'key': start, 
-			'initialTime': int(time()), 
-			'uid': userid 
-		} 
-		logger(VerificationTracker.keyArray[VerificationTracker.number], "Key registration") 
-		VerificationTracker.number += 1 
-		return True 
+		for i in range(VerificationTracker.kmax): 
+			if VerificationTracker.keyArray[i]['key'] == "": 
+				VerificationTracker.keyArray[i] = { 
+					'key': start, 
+					'initialTime': current_time, 
+					'uid': userid 
+				} 
+				VerificationTracker.number += 1 
+				logger(VerificationTracker.keyArray[i], "Key registration") 
+				return i 
+		return None  # Should rarely occur 
 
 	@staticmethod 
 	def checkKeyValidity(key: str): 
@@ -151,8 +162,8 @@ class VerificationTracker:
 					VerificationTracker.number -= 1 
 		return [False, 401] 
 
-class apiHandler(str):
-	@staticmethod
+class apiHandler(str): 
+	@staticmethod 
 	def postRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/POST/') 
 		postd = json.loads(data.decode('utf-8')) 
@@ -167,7 +178,14 @@ class apiHandler(str):
 			elif not testph[0]: print('P: '+pw_hash);print(testph); return testph 
 			user = SQLConnector.validateLogin(email, pw_hash) 
 			if not user[0]: return user 
-			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
+			key_index = VerificationTracker.newKey(user[2]) 
+			if key_index is None: 
+				return [False, 507]  # 507 Insufficient Storage 
+			return [ 
+				user[0], 
+				user[1], 
+				[{'key': VerificationTracker.keyArray[key_index]['key'], 'userid': user[2]}] 
+				] 
 		else: 
 			postd = json.loads(data.decode('utf-8')) 
 			testd = SQLConnector.SQLINJECTIONCHECK(postd.get('key')) 
@@ -280,7 +298,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			except Exception: self.send_response(411); self.end_headers(); return 
 			post_data = self.rfile.read(content_length) 
 			# self.send_header('Content-type', 'text/html') 
-			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data, client=self) 
+			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data) 
 			self.send_response(response[1]); self.send_header('Content-Type', 'application/json') 
 			if len(response)>3: self.send_header('Content-Length', len(str(response))) 
 			self.end_headers() 
