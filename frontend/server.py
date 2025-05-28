@@ -132,7 +132,7 @@ class VerificationTracker:
 
 class apiHandler(str):
 	@staticmethod
-	def postRequestHandler(endpoint: str, data: bytes): 
+	def postRequestHandler(endpoint: str, data: bytes, ip=""): 
 		target = endpoint.removeprefix('/api/0/POST/') 
 		postd = json.loads(data.decode('utf-8')) 
 		if target == 'login': 
@@ -146,7 +146,7 @@ class apiHandler(str):
 			elif not testph[0]: print('P: '+pw_hash);print(testph); return testph 
 			user = SQLConnector.validateLogin(email, pw_hash) 
 			if not user[0]: return user 
-			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2], str(postd))]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
+			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2], str(postd)+f"\n{ip}")]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
 		else: 
 			postd = json.loads(data.decode('utf-8')) 
 			testd = SQLConnector.SQLINJECTIONCHECK(postd.get('key')) 
@@ -257,7 +257,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			except Exception: self.send_response(411); self.end_headers(); return 
 			post_data = self.rfile.read(content_length) 
 			# self.send_header('Content-type', 'text/html') 
-			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data) 
+			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data, ip=self.address_string()) 
 			self.send_response(response[1]); self.send_header('Content-Type', 'application/json') 
 			if len(response)>3: self.send_header('Content-Length', len(str(response))) 
 			self.end_headers() 
