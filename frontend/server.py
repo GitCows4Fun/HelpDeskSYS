@@ -1,10 +1,38 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer; from math import trunc
-import ssl; import mimetypes 
-import os; from sys import argv; import json, random, mysql.connector 
+import ssl, mimetypes, traceback, os, io 
+from sys import argv; import json, random, mysql.connector 
 from sqlvalidator.sql_validator import parse as SQLParse 
 # from adduser import addUser 
+from socketserver import _SocketWriter as socketwrite
 import re; from datetime import datetime; from time import time 
 WEB_ROOT = '../website' 
+
+def logger(Data, title = None): 
+	if not title: title = "Activity Log" 
+	try: 
+		if isinstance(Data, dict): 
+			data = Data.copy() 
+		else: 
+			data = getattr(Data, '__dict__', Data) 
+			data = data.copy() if isinstance(data, (dict, list)) else data 
+		cleaned_data = {} 
+		if isinstance(data, dict): 
+			for key, value in data.items(): 
+				if not isinstance(value, (io.BufferedReader, socketwrite)): 
+					if callable(value): 
+						cleaned_data[key] = str(value) 
+					else: 
+						cleaned_data[key] = value 
+		else: 
+			cleaned_data = data 
+		with open('./userauth.log', 'a') as log: 
+			current_time = datetime.now().strftime("%d %B %Y, %I:%M%p") 
+			log_entry = f"{current_time}\n{title}:\n{json.dumps(cleaned_data, indent=4, default=lambda o: str(o))}\n{'-' * 50}\n" 
+			log.write(log_entry) 
+	except Exception as e: 
+		print(f"Error logging user activity: {str(e)}") 
+		raise 
+	finally: log.close() 
 
 class SQLConnector(): 
 	DB_CONFIG = {'host':'127.0.0.1','user':'root','password':'','database':'ticketdb'} 
@@ -60,7 +88,7 @@ class SQLConnector():
 			users = [] 
 			for row in data:
 				temp = ''.join(''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split("'")).split(',') 
-				print(f"temp: {temp}") 
+				print(f"temp: {temp}"); logger(temp, "Login data") 
 				users.append({'userid':temp[0],'commonName':temp[1],'email':temp[2],'pw_hash':temp[3]}) 
 			for i in range(len(users)): 
 				if email == users[i]['email'] and password_hash == users[i]['pw_hash']: 
@@ -100,7 +128,7 @@ class VerificationTracker:
 	timeout = 60*5 # 5 min in seconds 
 
 	@staticmethod 
-	def newKey(userid: int, loggableInfo = ""):
+	def newKey(userid: int):
 		if VerificationTracker.number >= VerificationTracker.kmax: return False 
 		start = ''.join(random.choice(VerificationTracker.choices) for _ in range(VerificationTracker.length)) 
 		VerificationTracker.keyArray[VerificationTracker.number] = { 
@@ -108,14 +136,7 @@ class VerificationTracker:
 			'initialTime': int(time()), 
 			'uid': userid 
 		} 
-		try: 
-			with open('./userauth.log', 'a') as log: 
-				current_time = datetime.now().strftime("%d %B %Y, %I:%M%p") 
-				log_entry = f"{current_time}\nVerification Key: {VerificationTracker.keyArray[VerificationTracker.number]}\n{loggableInfo}\n{'-' * 50}\n" 
-				log.write(log_entry) 
-		except Exception as e: 
-			print(f"Error logging user activity: {str(e)}") 
-		finally: log.close() 
+		logger(VerificationTracker.keyArray[VerificationTracker.number], "Key registration") 
 		VerificationTracker.number += 1 
 		return True 
 
@@ -132,7 +153,7 @@ class VerificationTracker:
 
 class apiHandler(str):
 	@staticmethod
-	def postRequestHandler(endpoint: str, data: bytes, ip=""): 
+	def postRequestHandler(endpoint: str, data: bytes): 
 		target = endpoint.removeprefix('/api/0/POST/') 
 		postd = json.loads(data.decode('utf-8')) 
 		if target == 'login': 
@@ -146,7 +167,7 @@ class apiHandler(str):
 			elif not testph[0]: print('P: '+pw_hash);print(testph); return testph 
 			user = SQLConnector.validateLogin(email, pw_hash) 
 			if not user[0]: return user 
-			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2], str(postd)+f"\n{ip}")]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
+			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
 		else: 
 			postd = json.loads(data.decode('utf-8')) 
 			testd = SQLConnector.SQLINJECTIONCHECK(postd.get('key')) 
@@ -171,6 +192,7 @@ class apiHandler(str):
 
 class RequestHandler(BaseHTTPRequestHandler): 
 	def do_GET(self): # API Endpoints 
+		logger(self, "Raw request data") 
 		if self.path.startswith('/api/0/GET/'): 
 			try: content_length = int(self.headers['Content-Length']) 
 			except Exception: self.send_response(411); self.end_headers(); return 
@@ -252,12 +274,13 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.wfile.write(b"404 Not Found") 
 
 	def do_POST(self): # API Endpoints 
+		logger(self, "Raw request data") 
 		if self.path.startswith('/api/0/POST/'): 
 			try: content_length = int(self.headers['Content-Length']) 
 			except Exception: self.send_response(411); self.end_headers(); return 
 			post_data = self.rfile.read(content_length) 
 			# self.send_header('Content-type', 'text/html') 
-			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data, ip=self.address_string()) 
+			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data, client=self) 
 			self.send_response(response[1]); self.send_header('Content-Type', 'application/json') 
 			if len(response)>3: self.send_header('Content-Length', len(str(response))) 
 			self.end_headers() 
@@ -269,6 +292,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee"); return 
 
 	def do_HEAD(self): # Last required method 
+		logger(self, "Raw request data") 
 		if '.' not in self.path: 
 			# Static html files 
 			requested_path = f'{self.path.lstrip('/')}.html' 
