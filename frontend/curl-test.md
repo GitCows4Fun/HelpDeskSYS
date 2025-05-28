@@ -17,7 +17,7 @@
 - `curl -X POST -H "Content-Type: application/json" -d '{"key":"your_verification_key","title":"Test Ticket","description":"This is a test"}' http://127.0.0.1:8008/api/0/POST/ticket`  
 - `curl -X GET -H "Content-Type: application/json" -d '{"key":"your_verification_key"}' http://127.0.0.1:8008/api/0/GET/data`  
 - `curl http://127.0.0.1:8008/favicon.png`  
-- `curl http://127.0.0.1:8008/style.css`  
+- `curl http://127.0.0.1:8008/style/style.css`  
 - `curl http://127.0.0.1:8008/nonexistent`  
 
 ## Powershell  
@@ -27,5 +27,5 @@
 - `curl -X POST -H @{'Content-Type' = 'application/json'} -d '{"key":"your_verification_key","title":"Test Ticket","description":"This is a test"}' http://127.0.0.1:8008/api/0/POST/ticket`  
 - `curl -X GET -H @{'Content-Type' = 'application/json'} -d '{"key":"your_verification_key"}' http://127.0.0.1:8008/api/0/GET/data`  
 - `curl http://127.0.0.1:8008/favicon.png`  
-- `curl http://127.0.0.1:8008/style.css`  
+- `curl http://127.0.0.1:8008/style/style.css`  
 - `curl http://127.0.0.1:8008/nonexistent`  
