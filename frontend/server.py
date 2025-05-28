@@ -258,7 +258,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 			post_data = self.rfile.read(content_length) 
 			# self.send_header('Content-type', 'text/html') 
 			response = apiHandler.postRequestHandler(endpoint = self.path, data = post_data) 
-			self.send_response(response[1]); self.send_header('Content-Type', 'application/json'); self.end_headers() 
+			self.send_response(response[1]); self.send_header('Content-Type', 'application/json') 
+			if len(response)>3: self.send_header('Content-Length', len(str(response))) 
+			self.end_headers() 
 			if len(response)>3: self.wfile.write(response[2].encode('utf-8')) 
 			return 
 		else: 
