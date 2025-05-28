@@ -59,7 +59,7 @@ class SQLConnector():
 				cursor.close(); connection.close(); script.close() 
 			users = [] 
 			for row in data:
-				temp = ''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split(',') 
+				temp = ''.join(''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split("'")).split(',') 
 				print(f"temp: {temp}") 
 				users.append({'userid':temp[0],'commonName':temp[1],'email':temp[2],'pw_hash':temp[3]}) 
 			for i in range(len(users)): 
@@ -100,7 +100,7 @@ class VerificationTracker:
 	timeout = 60*5 # 5 min in seconds 
 
 	@staticmethod 
-	def newKey(userid: int):
+	def newKey(userid: int, loggableInfo = ""):
 		if VerificationTracker.number >= VerificationTracker.kmax: return False 
 		start = ''.join(random.choice(VerificationTracker.choices) for _ in range(VerificationTracker.length)) 
 		VerificationTracker.keyArray[VerificationTracker.number] = { 
@@ -110,8 +110,8 @@ class VerificationTracker:
 		} 
 		try: 
 			with open('./userauth.log', 'a') as log: 
-				current_time = datetime.datetime.now().strftime("%d %B %Y, %I:%M%p") 
-				log_entry = f"{current_time}\nVerification Key: {VerificationTracker.keyArray[VerificationTracker.number]}\n{'-' * 50}\n" 
+				current_time = datetime.now().strftime("%d %B %Y, %I:%M%p") 
+				log_entry = f"{current_time}\nVerification Key: {VerificationTracker.keyArray[VerificationTracker.number]}\n{loggableInfo}\n{'-' * 50}\n" 
 				log.write(log_entry) 
 		except Exception as e: 
 			print(f"Error logging user activity: {str(e)}") 
@@ -146,7 +146,7 @@ class apiHandler(str):
 			elif not testph[0]: print('P: '+pw_hash);print(testph); return testph 
 			user = SQLConnector.validateLogin(email, pw_hash) 
 			if not user[0]: return user 
-			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2])]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
+			return [user[0], user[1], [{'key':VerificationTracker.keyArray[VerificationTracker.newKey(user[2], str(postd))]['key'],'userid':user[2]}]] if user[0] else [user[0], user[1]] 
 		else: 
 			postd = json.loads(data.decode('utf-8')) 
 			testd = SQLConnector.SQLINJECTIONCHECK(postd.get('key')) 
