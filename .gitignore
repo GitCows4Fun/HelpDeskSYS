@@ -1,2 +1,4 @@
 frontend/p.lst
 frontend/userauth.log
+*/*.log 
+*.log 
