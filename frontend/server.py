@@ -25,7 +25,7 @@ def logger(Data, title = None):
 						cleaned_data[key] = value 
 		else: 
 			cleaned_data = data 
-		with open('./userauth.log', 'a') as log: 
+		with open('./.log', 'a') as log: 
 			current_time = datetime.now().strftime("%d %B %Y, %I:%M%p") 
 			log_entry = f"{current_time}\n{title}:\n{json.dumps(cleaned_data, indent=4, default=lambda o: str(o))}\n{'-' * 50}\n" 
 			log.write(log_entry) 
