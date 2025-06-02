@@ -1,11 +1,20 @@
 POST 
-	login                               # attempt a login. takes email and sha256 hashed passw as data. returns 200 Okay for correct login, and 400 if not, etc. 
-												secondary return: userid + auto-generated key. used for authing the connection // timeout of ~5min for demo 
-												after timeout return 401 to EVERYTHING. 
-	data                                # post a new ticket to db. takes a list of title and description + state as well as userid hash [str()*2, bool, str()] 
+	login					# attempt a login. takes email and sha256 hashed passw as data. returns 200 Okay for correct login, and 400 if not, etc. 
+									secondary return: userid + auto-generated key. used for authing the connection // timeout of ~5min for demo 
+									after timeout return 401 to EVERYTHING. 
+								expects the following in json:
+									[{"email": "name@somewhere"}, {"pw_hash": "<>"}] 
+	data					# post a new ticket to db. takes a list of title and description + state as well as a key. 
+								in json:
+									[{"title": "some stuff"}, {"description": "long string"}, {"key": "<>"}] 
+	newuser					# adds a ticket to the db to create a new user. takes email + pw_hash as minimum - optionally a commonName 
+								as json:
+									[{"email": "name@somewhere"}, {"pw_hash": "<>"}, {"commonName": "something something"}] 
 
 GET 
-	data                                # returns json of tickets. takes key hash as input data for verification 
+	data					# returns json of tickets. takes key hash as input data for verification 
+								input json: 
+									[{"key": "<>"}] 
 
 
 RETURN CODES 
