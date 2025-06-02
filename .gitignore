@@ -1,2 +1,5 @@
 frontend/p.lst
-
+frontend/.log
+*/*.log 
+*.log 
+.log
