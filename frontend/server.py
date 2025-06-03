@@ -1,4 +1,4 @@
-import enum
+from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import subprocess
 import ssl, mimetypes, traceback, os, io
@@ -10,8 +10,8 @@ from socketserver import _SocketWriter as socketwrite
 import re; from datetime import datetime; from time import time
 WEB_ROOT = '../website'
 
-class ticketType(enum):
-	NewUser = "newUser",
+class ticketType(Enum):
+	NewUser = "newUser"
 	NewTicket = "newTicket"
 
 def logger(Data, title=None):
@@ -37,7 +37,7 @@ def logger(Data, title=None):
 					cleaned_data[key] = value
 		else:
 			cleaned_data = data
-		with open('./.log', 'a') as log:
+		with open('./log', 'a') as log:
 			current_time = datetime.now().strftime("%d %B %Y, %I:%M%p")
 			log_entry = f"{current_time}\n{title}:\n{json.dumps(cleaned_data, indent=4, default=lambda o: str(o))}\n{'-' * 50}\n"
 			log.write(log_entry)
