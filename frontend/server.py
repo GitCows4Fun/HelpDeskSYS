@@ -14,8 +14,9 @@ class ticketType(enum):
 	NewUser = "newUser",
 	NewTicket = "newTicket"
 
-def logger(Data, title = None):
-	if not title: title = "Activity Log"
+def logger(Data, title=None):
+	if not title:
+		title = "Activity Log"
 	try:
 		if isinstance(Data, dict):
 			data = Data.copy()
@@ -28,8 +29,12 @@ def logger(Data, title = None):
 				if not isinstance(value, (io.BufferedReader, socketwrite)):
 					if callable(value):
 						cleaned_data[key] = str(value)
-					else:
-						cleaned_data[key] = value
+					elif isinstance(value, str):
+						try:
+							value = json.loads(value)
+						except json.JSONDecodeError:
+							pass
+					cleaned_data[key] = value
 		else:
 			cleaned_data = data
 		with open('./.log', 'a') as log:
@@ -39,7 +44,8 @@ def logger(Data, title = None):
 	except Exception as e:
 		print(f"Error logging user activity: {str(e)}")
 		raise
-	finally: log.close()
+	finally:
+		log.close()
 
 class SQLConnector():
 	DB_CONFIG = {'host':'127.0.0.1','user':'root','password':'','database':'ticketdb'}
