@@ -254,7 +254,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.wfile.write(favicon_data) 
 			elif '.' not in self.path: 
 				# Serve static html files 
-				requested_path = f'{self.path.lstrip('/')}.html' 
+				requested_path = f"{self.path.lstrip('/')}.html" 
 				file_path = os.path.join(WEB_ROOT, requested_path) 
 
 				if os.path.isfile(file_path): 
