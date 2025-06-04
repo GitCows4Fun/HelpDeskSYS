@@ -4,6 +4,8 @@ POST
 									after timeout return 401 to EVERYTHING. 
 								expects the following in json:
 									[{"email": "name@somewhere"}, {"pw_hash": "<>"}] 
+								responds with ~:
+									{"userid": 0, "auth_key": "9Znn8S5p0oZ^fk^^H6Td", "expires_in": 300}
 	data					# post a new ticket to db. takes a list of title and description + state as well as a key. 
 								in json:
 									[{"title": "some stuff"}, {"description": "long string"}, {"key": "<>"}] 
