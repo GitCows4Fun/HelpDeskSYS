@@ -371,6 +371,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			get_data = self.rfile.read(content_length)
 			response = apiHandler.getRequestHandler(endpoint = self.path, data = get_data)
 			self.send_response(response[1])
+			logger(response, "GET response")
 			self.send_header('Content-Type', 'application/json')
 			response_size = len(str(response[2])) if len(response) >= 3 else 0
 			self.send_header('Content-length', str(response_size))
@@ -382,6 +383,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Content-length', '0')
 			self.end_headers()
 			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee")
+			logger([418, self.wfile], "POST response")
 
 		else:
 			# Serve index.html for root
@@ -394,6 +396,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 				self.send_header('Content-length', str(file_size))
 				self.end_headers()
 				self.wfile.write(html_content)
+				logger(200, "GET response")
 			elif self.path == '/favicon.png':
 				# favicon handler
 				self.send_response(200)
@@ -404,6 +407,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 				with open(WEB_ROOT+'/assets/graphics/favicon.png', 'rb') as favicon_file:
 					favicon_data = favicon_file.read()
 					self.wfile.write(favicon_data)
+					logger(200, "GET response")
 			elif '.' not in self.path:
 				# Serve static html files
 				requested_path = f"{self.path.lstrip('/')}.html"
@@ -418,12 +422,14 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.end_headers()
 					with open(file_path, 'rb') as f:
 						self.wfile.write(f.read())
+					logger(200, "GET response")
 				else:
 					self.send_response(404)
 					self.send_header('Content-type', 'text/plain')
 					self.send_header('Content-length', '0')
 					self.end_headers()
 					self.wfile.write(b"404 Not Found")
+					logger([404, self.wfile], "GET response")
 			else:
 				# Serve static files from /css, /js, etc.
 				requested_path = self.path.lstrip('/')
@@ -438,12 +444,14 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.end_headers()
 					with open(file_path, 'rb') as f:
 						self.wfile.write(f.read())
+					logger(200, "GET response")
 				else:
 					self.send_response(404)
 					self.send_header('Content-type', 'text/plain')
 					self.send_header('Content-length', '0')
 					self.end_headers()
 					self.wfile.write(b"404 Not Found")
+					logger([404, self.wfile], "GET response")
 
 	def do_POST(self):
 		logger(self)
@@ -467,10 +475,12 @@ class RequestHandler(BaseHTTPRequestHandler):
 			self.end_headers()
 			if body:
 				self.wfile.write(body)
+			logger(response, "POST response")
 		else:
 			self.send_response(418)
 			self.end_headers()
 			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee")
+			logger([418, self.wfile], "POST response")
 
 	def do_HEAD(self): # Last required method
 		logger(self, "Raw request data - HEAD")
