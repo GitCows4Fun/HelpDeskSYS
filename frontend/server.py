@@ -6,7 +6,7 @@ from sys import argv; import json, random, mysql.connector
 from networkx import is_connected
 from sqlvalidator.sql_validator import parse as SQLParse
 # from adduser import addUser
-from socketserver import _SocketWriter as socketwrite
+import socket
 import re; from datetime import datetime; from time import time
 WEB_ROOT = '../website'
 
@@ -26,17 +26,19 @@ def logger(Data, title=None):
 		cleaned_data = {}
 		if isinstance(data, dict):
 			for key, value in data.items():
-				if not isinstance(value, (io.BufferedReader, socketwrite)):
-					if callable(value):
-						cleaned_data[key] = str(value)
-					elif isinstance(value, str):
-						try:
-							value = json.loads(value)
-						except json.JSONDecodeError:
-							pass
+				if isinstance(value, (io.BufferedReader, socket.socket)):
+					cleaned_data[key] = str(value)
+				elif callable(value):
+					cleaned_data[key] = str(value)
+				elif isinstance(value, bytes):
+					cleaned_data[key] = value.decode('utf-8', errors='ignore')
+				elif isinstance(value, str):
+					try: value = json.loads(value)
+					except json.JSONDecodeError:
+						pass
 					cleaned_data[key] = value
-		else:
-			cleaned_data = data
+				else: cleaned_data[key] = str(value)
+		else: cleaned_data = data
 		with open('./log', 'a') as log:
 			current_time = datetime.now().strftime("%d %B %Y, %I:%M%p")
 			log_entry = f"{current_time}\n{title}:\n{json.dumps(cleaned_data, indent=4, default=lambda o: str(o))}\n{'-' * 50}\n"
@@ -86,32 +88,59 @@ class SQLConnector():
 	def validateLogin(email: str, password_hash: str):
 		try:
 			testP = SQLConnector.SQLINJECTIONCHECK(password_hash)
+			if not testP[0]:
+				return [False, 403, "Forbidden: SQL Injection detected"]
 			testE = SQLConnector.EmailIsValid(email)
+			if not testE:
+				return [False, 403, "Forbidden: Invalid email format"]
 			if not testP[0]:
 				return testP
 			if not testE:
-				return [False, 403]
+				return [False, 403, "Invalid email format"]
 			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG)
 			cursor = connection.cursor()
 			with open('../backend/userfetch.sql') as script:
-				sql = script.read()
-				cursor.execute(sql)
-				data = cursor.fetchall()
-				cursor.close(); connection.close(); script.close()
-			users = []
-			for row in data:
-				temp = ''.join(''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split("'")).split(',')
-				# print(f"temp: {temp}")
-				logger(temp, "Login data")
-				users.append({'userid':temp[0],'commonName':temp[1],'email':temp[2],'pw_hash':temp[3]})
-			for i in range(len(users)):
-				if email == users[i]['email'] and password_hash == users[i]['pw_hash']:
-					return [True, 200, users[i]['userid']]
-			return [False, 400]
-		except ConnectionError as e: print(str(e)); return [False, 500]
-		except mysql.connector.Error as e: print(str(e)); return [False, 500]
-		except IndexError or TypeError or ValueError as e: print(str(e)); return [False, 400]
-		except Exception as e: print(str(e)); return [False, 404]
+				base_sql = script.read().strip()
+			filtered_sql = f"{base_sql} WHERE email = '{email}'"
+			cursor.execute(filtered_sql)
+			data = cursor.fetchall()
+			row = data[0] if data else None
+			cursor.close()
+			connection.close()
+			script.close()
+			login_attempt = {
+				'email': email,
+				'timestamp': datetime.now().strftime("%d %B %Y, %I:%M%p")
+			}
+			if row:
+				user_id, username, user_email, db_pw_hash = row
+				if db_pw_hash == password_hash:
+					login_attempt.update({
+						'status': 'success',
+						'userid': user_id,
+						'username': username
+					})
+					logger(login_attempt, "Active Login Attempt")
+					return [True, 200, user_id]
+			login_attempt['status'] = 'failed'
+			logger(login_attempt, "Active Login Attempt")
+			return [False, 400, "Login failed"]
+		except ConnectionError as e:
+			print(str(e))
+			return [False, 500, "Connection error"]
+		except mysql.connector.Error as e:
+			error_msg = str(e).lower()
+			if "syntax" in error_msg or "sql" in error_msg:
+				return [False, 403, "Forbidden: SQL error detected"]
+			return [False, 500, "Database error"]
+		except IndexError or TypeError or ValueError as e:
+			print(str(e))
+			return [False, 400, "Value error"]
+		except Exception as e:
+			print(str(e))
+			return [False, 404, "General error"]
+
+
 
 	@staticmethod
 	def getTickets():
@@ -202,6 +231,8 @@ class apiHandler(str):
 	def postRequestHandler(endpoint: str, data: bytes):
 		target = endpoint.removeprefix('/api/0/POST/')
 		postd = json.loads(data.decode('utf-8'))
+		
+		logger({"Data": data.decode("utf-8")}, title="POST request data")
 
 		if target == 'login':
 			try:
@@ -305,6 +336,8 @@ class apiHandler(str):
 	def getRequestHandler(endpoint: str, data: bytes):
 		target = endpoint.removeprefix('/api/0/GET/')
 		getd = json.loads(data.decode('utf-8'))
+		
+		logger({"Data": data.decode("utf-8")}, title="GET request data")
 
 		if target == 'data':
 			try:
@@ -331,7 +364,7 @@ class apiHandler(str):
 
 class RequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self): # API Endpoints
-		logger(self, "Raw request data")
+		logger(self)
 		if self.path.startswith('/api/0/GET/'):
 			try: content_length = int(self.headers['Content-Length'])
 			except Exception: self.send_response(411); self.end_headers(); return
@@ -413,7 +446,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 					self.wfile.write(b"404 Not Found")
 
 	def do_POST(self):
-		logger(self, "Raw request data")
+		logger(self)
 		if self.path.startswith('/api/0/POST/'):
 			try:
 				content_length = int(self.headers['Content-Length'])
@@ -440,7 +473,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			self.wfile.write(b"I'm a teapot\nYou asked a teapot to brew coffee")
 
 	def do_HEAD(self): # Last required method
-		logger(self, "Raw request data")
+		logger(self, "Raw request data - HEAD")
 		if '.' not in self.path:
 			# Static html files
 			requested_path = f'{self.path.lstrip('/')}.html'
