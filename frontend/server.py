@@ -355,12 +355,12 @@ class RequestHandler(BaseHTTPRequestHandler):
 			if self.path == ('/' or ''):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
-				file_size = os.path.getsize(WEB_ROOT+'/index.html')
+				with open(WEB_ROOT+'/index.html', 'rb') as file:
+					html_content = file.read()
+				file_size = len(html_content)
 				self.send_header('Content-length', str(file_size))
 				self.end_headers()
-				with open(WEB_ROOT+'/index.html', 'r') as file:
-					html_content = file.read().encode('utf-8')
-					self.wfile.write(html_content)
+				self.wfile.write(html_content)
 			elif self.path == '/favicon.png':
 				# favicon handler
 				self.send_response(200)
