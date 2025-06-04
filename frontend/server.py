@@ -51,8 +51,8 @@ class SQLConnector():
 	DB_CONFIG = {'host':'127.0.0.1','user':'root','password':'','database':'ticketdb'}
 	EMAIL_REGEX = r'^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})*$'
 	SQL_RESTRICTED = {
-		'chars': [';', '\\', '*', '`', '$', '#', '!', '{', '}', '(', ')'],
-		'keywords': ['EXEC', 'SELECT', 'WHERE', 'LIKE', 'HAVING', 'OFFSET', 'INSERT', 'DELETE', 'CREATE', 'DROP', 'GRANT', 'REVOKE']
+		'chars': [';', '\\', '*', '`', '$', '#', '!', '{', '}', '(', ')', ' ', '"', "'", '-', '/'],
+		'keywords': ['EXEC', 'SELECT', 'WHERE', 'LIKE', 'HAVING', 'OFFSET', 'INSERT', 'DELETE', 'CREATE', 'DROP', 'GRANT', 'REVOKE', 'UNION']
 	}
 
 	@staticmethod
@@ -73,12 +73,12 @@ class SQLConnector():
 
 	@staticmethod
 	def HasSQLChars(string: str) -> bool:
-		string_lower = string.lower()
+		string_lower_clean = string.lower().replace('\t', '').replace('\n', '')
 		for char in SQLConnector.SQL_RESTRICTED['chars']:
 			if char in string:
 				return True
 		for kw in SQLConnector.SQL_RESTRICTED['keywords']:
-			if kw.lower() in string_lower.split():
+			if kw.lower() in string_lower_clean.split():
 				return True
 		return False
 
