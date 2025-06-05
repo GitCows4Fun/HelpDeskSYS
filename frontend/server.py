@@ -182,7 +182,7 @@ class SQLConnector():
 			connection.close()
 		except ConnectionError: return [False, 500]
 		except mysql.connector.Error: return [False, 500]
-		except IndexError or TypeError or ValueError: return [False, 400]
+		except IndexError or TypeError or ValueError: raise; return [False, 400]
 		except Exception: return [False, 404]
 
 class VerificationTracker:
@@ -307,7 +307,7 @@ class apiHandler(str):
 		elif target == 'newuser':
 			try:
 				email = postd.get('email')
-				pw_hash = postd.get('password_hash')
+				pw_hash = postd.get('pw_hash')
 				commonName = postd.get('commonName', '')
 				if not email or not pw_hash:
 					return [False, 400, "Missing required fields"]
