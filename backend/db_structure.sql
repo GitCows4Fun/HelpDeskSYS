@@ -6,10 +6,10 @@ CREATE SCHEMA IF NOT EXISTS `ticketdb` DEFAULT CHARACTER SET utf8mb3 ;
 USE `ticketdb` ;
 
 CREATE TABLE IF NOT EXISTS `ticketdb`.`users` (
-  `userID` INT UNSIGNED NOT NULL DEFAULT 0,
+  `userID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `commonName` VARCHAR(45) NOT NULL,
   `email` VARCHAR(40) NOT NULL,
-  `passwordHash` VARCHAR(45) NOT NULL,
+  `passwordHash` VARCHAR(256) NOT NULL,
   PRIMARY KEY (`userID`),
   UNIQUE INDEX `commonName_UNIQUE` (`commonName` ASC),
   UNIQUE INDEX `userID_UNIQUE` (`userID` ASC),
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `ticketdb`.`tickets` (
     REFERENCES `ticketdb`.`users` (`userID`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
