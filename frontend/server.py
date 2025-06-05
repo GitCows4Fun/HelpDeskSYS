@@ -7,6 +7,7 @@ from networkx import is_connected
 from sqlvalidator.sql_validator import parse as SQLParse
 # from adduser import addUser
 import socket
+from urllib.parse import unquote
 import re; from datetime import datetime; from time import time
 WEB_ROOT = '../website'
 
@@ -188,7 +189,7 @@ class VerificationTracker:
 	length = 20; number = 0; kmax = 2
 	keyArray = [{'key': "",'initialTime': 0, 'uid':0} for _ in range(kmax)]
 	choices = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','%','&','@','=','>','<','^']
+		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','&','@','=','>','<','^']
 	timeout = 60*5 # 5 min in seconds
 
 	@staticmethod
@@ -367,7 +368,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self): # API Endpoints
 		logger(self)
 		if self.path.startswith('/api/0/GET/'):
-			response = apiHandler.getRequestHandler(endpoint = self.path)
+			response = apiHandler.getRequestHandler(endpoint = unquote(self.path))
 			self.send_response(response[1])
 			logger(response, "GET response")
 			self.send_header('Content-Type', 'application/json')
