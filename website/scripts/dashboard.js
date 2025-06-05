@@ -2,7 +2,20 @@
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8008';
 
-// Load authentication data from localStorage (matching login.js implementation)
+function getUserData() {
+	return {
+		authKey: localStorage.getItem('authKey'),
+		userId: localStorage.getItem('userId'),
+		username: localStorage.getItem('username'),
+		email: localStorage.getItem('userEmail')
+	};
+}
+
+
+// Global variables accessible to all functions
+let authKey = null;
+let userData = null;
+
 function getAuthKey() {
 	return localStorage.getItem('authKey');
 }
@@ -16,75 +29,27 @@ function getUserData() {
 	};
 }
 
-// Check if user is authenticated and redirect if not
-document.addEventListener('DOMContentLoaded', function() {
-    const authKey = getAuthKey();
-    const userData = getUserData();
-    
-    console.log('Auth Key:', authKey);
-    console.log('User Data:', userData);
-    
-    if (!authKey || !userData.username) {
-        console.log('Authentication failed - redirecting to login');
-        localStorage.clear();
-        window.location.href = 'login.html';
-        return;
-    }
-    
+document.addEventListener('DOMContentLoaded', () => {
+	authKey = getAuthKey();
+	userData = getUserData();
+
+	if (!authKey || !userData.username) {
+		localStorage.removeItem('authKey');
+		localStorage.removeItem('userId');
+		localStorage.removeItem('username');
+		localStorage.removeItem('userEmail');
+		window.location.href = 'login';
+		return;
+	}
+
+	// Add debugging to see what values we have
+	console.log('Auth Key:', authKey);
+	console.log('User Data:', userData);
+	console.log('Username specifically:', userData.username);
+
     document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
     loadTickets();
 });
-
-// Get auth key from localStorage
-// API function to fetch tickets
-async function fetchTickets() {
-	try {
-		console.log('Fetching tickets with auth key:', authKey);
-		
-		const response = await fetch(`${API_BASE_URL}/api/0/GET/data`, {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				key: authKey
-			})
-		});
-
-		console.log('Fetch tickets response status:', response.status);
-		
-		if (response.status === 200) {
-			const responseText = await response.text();
-			console.log('Raw response:', responseText);
-			
-			let tickets;
-			try {
-				tickets = JSON.parse(responseText);
-			} catch (parseError) {
-				console.error('Failed to parse tickets response:', parseError);
-				return { success: false, error: 'Invalid response format from server' };
-			}
-			
-			console.log('Parsed tickets:', tickets);
-			return { success: true, data: tickets };
-		} else if (response.status === 401) {
-			console.log('Authentication expired during ticket fetch');
-			localStorage.removeItem('authKey');
-			localStorage.removeItem('userId');
-			localStorage.removeItem('username');
-			localStorage.removeItem('userEmail');
-			window.location.href = 'login';
-			return { success: false, error: 'Session expired' };
-		} else {
-			const errorText = await response.text();
-			console.error('Server error fetching tickets:', response.status, errorText);
-			return { success: false, error: `Server error: ${response.status}` };
-		}
-	} catch (error) {
-		console.error('Network error fetching tickets:', error);
-		return { success: false, error: 'Network error: Unable to connect to server' };
-	}
-}
 
 // API function to create a new ticket
 async function fetchTickets() {
@@ -121,7 +86,7 @@ async function fetchTickets() {
 		} else if (response.status === 401) {
 			console.log('Authentication expired during ticket fetch');
 			localStorage.clear();
-			window.location.href = 'Login.html';
+			window.location.href = 'login';
 			return { success: false, error: 'Session expired' };
 		} else {
 			const errorText = await response.text();
@@ -273,6 +238,3 @@ window.onclick = function(event) {
 		closeAddTicketModal();
 	}
 }
-
-// Initialize dashboard
-loadTickets();
