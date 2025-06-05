@@ -21,32 +21,20 @@ function getUserData() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-	authKey = getAuthKey();
-	userData = getUserData();
 
-	if (!authKey) {
-		console.log('authKey:', localStorage.getItem('authKey'));
-		console.log('userData:', {
-		userId: localStorage.getItem('userId'),
-		userEmail: localStorage.getItem('userEmail'),
-		username: localStorage.getItem('username')
-	});
+    authKey = getAuthKey();
+    userData = getUserData();
+    
+    if (!authKey) {
+        localStorage.removeItem('authKey');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userEmail');
+        window.location.href = 'login';
+        return;
+    }
 
-
-		localStorage.removeItem('authKey');
-		localStorage.removeItem('userId');
-		localStorage.removeItem('username');
-		localStorage.removeItem('userEmail');
-		window.location.href = 'login';
-		return;
-	}
-
-	// Add debugging to see what values we have
-	console.log('Auth Key:', authKey);
-	console.log('User Data:', userData);
-	console.log('Username specifically:', userData.username);
-
-	document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
+    document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
 	loadTickets();
 });
 
