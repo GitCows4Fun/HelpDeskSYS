@@ -178,6 +178,40 @@ function closeAddTicketModal() {
 	document.getElementById('addTicketForm').reset();
 }
 
+// API function to create a new ticket
+async function createTicket(title, description) {
+	try {
+		const response = await fetch(`${API_BASE_URL}/api/0/POST/data`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				title: title,
+				description: description,
+				key: authKey
+			})
+		});
+
+		if (response.status === 201) {
+			return { success: true };
+		} else if (response.status === 401) {
+			// Authentication expired
+			sessionStorage.removeItem('currentUser');
+			window.location.href = 'login';
+			return { success: false, error: 'Session expired' };
+		} else if (response.status === 400) {
+			return { success: false, error: 'Invalid ticket data provided' };
+		} else if (response.status === 403) {
+			return { success: false, error: 'Request blocked for security reasons' };
+		} else {
+			return { success: false, error: `Server error: ${response.status}` };
+		}
+	} catch (error) {
+		return { success: false, error: 'Network error: Unable to connect to server' };
+	}
+}
+
 // Add new ticket
 document.getElementById('addTicketForm').addEventListener('submit', async function(e) {
 	e.preventDefault();
