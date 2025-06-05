@@ -152,7 +152,7 @@ class SQLConnector():
 				sql = script.read()
 				cursor.execute(str(sql))
 				data = cursor.fetchall()
-				cursor.close; connection.close(); script.close()
+				cursor.close(); connection.close(); script.close()
 			tickets = []
 			for row in data:
 				temp = ''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split(',')
