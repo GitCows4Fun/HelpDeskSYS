@@ -184,7 +184,7 @@ class SQLConnector():
 
 				if type == ticketType.NewUser:
 					script = """INSERT INTO tickets (ticketID, title, description) VALUES (%s, %s, %s)"""
-					values = (new_ticket_id, 'Add new User', ticketData)
+					values = (new_ticket_id, 'Add new User', str(ticketData))
 				else:
 					user_id = ticketData[2]
 					script = """INSERT INTO tickets (ticketID, users_userID, title, description) VALUES (%s, %s, %s, %s)"""
