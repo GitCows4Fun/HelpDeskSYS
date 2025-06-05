@@ -6,21 +6,36 @@
 }
 
 body {
-	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	font-family: 'Comic Sans MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 50%, #FFE4E1 100%);
 	min-height: 100vh;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	background-image: 
+		radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+		radial-gradient(circle at 80% 20%, rgba(255, 192, 203, 0.3) 0%, transparent 50%);
 }
 
 .login-container {
 	background: white;
 	padding: 40px;
-	border-radius: 10px;
-	box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+	border-radius: 25px;
+	box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3);
 	width: 100%;
 	max-width: 400px;
+	border: 3px solid #FFB6C1;
+	position: relative;
+}
+
+.login-container::before {
+	content: "🎀";
+	position: absolute;
+	top: -15px;
+	right: 20px;
+	font-size: 30px;
+	background: white;
+	padding: 0 10px;
 }
 
 .logo {
@@ -29,14 +44,24 @@ body {
 }
 
 .logo h1 {
-	color: #333;
-	font-size: 28px;
+	color: #FF69B4;
+	font-size: 32px;
 	margin-bottom: 5px;
+	text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+}
+
+.logo h1::before {
+	content: "🌸 ";
+}
+
+.logo h1::after {
+	content: " 🌸";
 }
 
 .logo p {
-	color: #666;
-	font-size: 14px;
+	color: #FF1493;
+	font-size: 16px;
+	font-weight: bold;
 }
 
 .form-group {
@@ -46,47 +71,61 @@ body {
 label {
 	display: block;
 	margin-bottom: 5px;
-	color: #333;
-	font-weight: 500;
+	color: #FF1493;
+	font-weight: bold;
 }
 
 input[type="text"],
 input[type="password"] {
 	width: 100%;
 	padding: 12px;
-	border: 2px solid #e1e1e1;
-	border-radius: 5px;
+	border: 3px solid #FFB6C1;
+	border-radius: 15px;
 	font-size: 16px;
-	transition: border-color 0.3s;
+	transition: all 0.3s;
+	background: #FFF5EE;
 }
 
 input[type="text"]:focus,
 input[type="password"]:focus {
 	outline: none;
-	border-color: #667eea;
+	border-color: #FF69B4;
+	box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+	transform: scale(1.02);
 }
 
 .login-btn {
 	width: 100%;
-	padding: 12px;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	padding: 15px;
+	background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
 	color: white;
 	border: none;
-	border-radius: 5px;
-	font-size: 16px;
+	border-radius: 20px;
+	font-size: 18px;
+	font-weight: bold;
 	cursor: pointer;
-	transition: transform 0.2s;
+	transition: all 0.3s;
+	box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
 }
 
 .login-btn:hover {
-	transform: translateY(-2px);
+	transform: translateY(-3px);
+	box-shadow: 0 8px 25px rgba(255, 105, 180, 0.6);
+}
+
+.login-btn::before {
+	content: "💖 ";
 }
 
 .error-message {
-	color: #e74c3c;
+	color: #FF1493;
 	text-align: center;
 	margin-top: 10px;
 	display: none;
+	background: #FFE4E1;
+	padding: 10px;
+	border-radius: 10px;
+	border: 2px solid #FFB6C1;
 }
 
 .create-account-link {
@@ -95,30 +134,44 @@ input[type="password"]:focus {
 }
 
 .create-account-link a {
-	color: #667eea;
+	color: #FF69B4;
 	text-decoration: none;
+	font-weight: bold;
 }
 
 .create-account-link a:hover {
 	text-decoration: underline;
+	color: #FF1493;
 }
 
 .demo-credentials {
-	background: #f8f9fa;
-	padding: 15px;
-	border-radius: 5px;
+	background: linear-gradient(135deg, #FFE4E1 0%, #FFF0F5 100%);
+	padding: 20px;
+	border-radius: 15px;
 	margin-bottom: 20px;
-	border-left: 4px solid #667eea;
+	border: 3px solid #FFB6C1;
+	position: relative;
+}
+
+.demo-credentials::before {
+	content: "🐱";
+	position: absolute;
+	top: -10px;
+	left: 20px;
+	background: white;
+	padding: 0 10px;
+	font-size: 20px;
 }
 
 .demo-credentials h3 {
-	color: #333;
+	color: #FF1493;
 	margin-bottom: 10px;
-	font-size: 14px;
+	font-size: 16px;
 }
 
 .demo-credentials p {
-	color: #666;
-	font-size: 12px;
+	color: #FF69B4;
+	font-size: 14px;
 	margin: 2px 0;
+	font-weight: bold;
 }

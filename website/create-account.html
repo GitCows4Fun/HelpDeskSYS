@@ -1,99 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - Helpdesk</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Create Account - Helpdesk</title>
 </head>
 <body>
-    <div class="signup-container">
-        <div class="logo">
-            <h1>HelpDesk Pro</h1>
-            <p>Create Your Account</p>
-        </div>
+	<div class="signup-container">
+		<div class="logo">
+			<h1>Hello Kitty HelpDesk</h1>
+			<p>Join Our Kawaii Community! 🌟</p>
+		</div>
 
-        <form id="signupForm">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <div class="input-group">
-                        <input type="text" id="firstName" name="firstName" required>
-                        <span class="input-feedback" id="firstNameFeedback"></span>
-                    </div>
-                </div>
+		<form id="signupForm">
+			<div class="form-row">
+				<div class="form-group">
+					<label for="firstName">First Name</label>
+					<div class="input-group">
+						<input type="text" id="firstName" name="firstName" required>
+						<span class="input-feedback" id="firstNameFeedback"></span>
+					</div>
+				</div>
 
-                <div class="form-group">
-                    <label for="lastName">Last Name</label>
-                    <div class="input-group">
-                        <input type="text" id="lastName" name="lastName" required>
-                        <span class="input-feedback" id="lastNameFeedback"></span>
-                    </div>
-                </div>
-            </div>
+				<div class="form-group">
+					<label for="lastName">Last Name</label>
+					<div class="input-group">
+						<input type="text" id="lastName" name="lastName" required>
+						<span class="input-feedback" id="lastNameFeedback"></span>
+					</div>
+				</div>
+			</div>
 
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <div class="input-group">
-                    <input type="email" id="email" name="email" required>
-                    <span class="input-feedback" id="emailFeedback"></span>
-                </div>
-            </div>
+			<div class="form-group">
+				<label for="email">Email Address</label>
+				<div class="input-group">
+					<input type="email" id="email" name="email" required>
+					<span class="input-feedback" id="emailFeedback"></span>
+				</div>
+			</div>
 
-            <div class="form-group">
-                <label for="username">Username</label>
-                <div class="input-group">
-                    <input type="text" id="username" name="username" required minlength="3">
-                    <span class="input-feedback" id="usernameFeedback"></span>
-                </div>
-            </div>
+			<div class="form-group">
+				<label for="username">Username</label>
+				<div class="input-group">
+					<input type="text" id="username" name="username" required minlength="3">
+					<span class="input-feedback" id="usernameFeedback"></span>
+				</div>
+			</div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <div class="input-group">
-                    <input type="password" id="password" name="password" required minlength="6">
-                    <span class="input-feedback" id="passwordFeedback"></span>
-                </div>
-                <div class="strength-meter">
-                    <div class="strength-fill" id="strengthFill"></div>
-                </div>
-                <div class="password-requirements">
-                    <p>Password must contain:</p>
-                    <ul>
-                        <li id="req-length">At least 6 characters</li>
-                        <li id="req-uppercase">One uppercase letter</li>
-                        <li id="req-lowercase">One lowercase letter</li>
-                        <li id="req-number">One number</li>
-                    </ul>
-                </div>
-            </div>
+			<div class="form-group">
+				<label for="password">Password</label>
+				<div class="input-group">
+					<input type="password" id="password" name="password" required minlength="6">
+					<span class="input-feedback" id="passwordFeedback"></span>
+				</div>
+				<div class="strength-meter">
+					<div class="strength-fill" id="strengthFill"></div>
+				</div>
+				<div class="password-requirements">
+					<p>Password must contain:</p>
+					<ul>
+						<li id="req-length">At least 6 characters</li>
+						<li id="req-uppercase">One uppercase letter</li>
+						<li id="req-lowercase">One lowercase letter</li>
+						<li id="req-number">One number</li>
+					</ul>
+				</div>
+			</div>
 
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <div class="input-group">
-                    <input type="password" id="confirmPassword" name="confirmPassword" required>
-                    <span class="input-feedback" id="confirmPasswordFeedback"></span>
-                </div>
-            </div>
+			<div class="form-group">
+				<label for="confirmPassword">Confirm Password</label>
+				<div class="input-group">
+					<input type="password" id="confirmPassword" name="confirmPassword" required>
+					<span class="input-feedback" id="confirmPasswordFeedback"></span>
+				</div>
+			</div>
 
-            <div class="form-group">
-                <label for="role">Role</label>
-                <select id="role" name="role" required>
-                    <option value="">Select Role</option>
-                    <option value="user">User</option>
-                    <option value="agent">Support Agent</option>
-                    <option value="admin">Administrator</option>
-                </select>
-            </div>
+			<div class="form-group">
+				<label for="role">Role</label>
+				<select id="role" name="role" required>
+					<option value="">Select Role</option>
+					<option value="user">User</option>
+					<option value="agent">Support Agent</option>
+					<option value="admin">Administrator</option>
+				</select>
+			</div>
 
-            <button type="submit" class="signup-btn" id="submitBtn" disabled>Create Account</button>
-            
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
-        </form>
+			<button type="submit" class="signup-btn" id="submitBtn" disabled>Create Account</button>
+			
+			<div class="error-message" id="errorMessage"></div>
+			<div class="success-message" id="successMessage"></div>
+		</form>
 
-        <div class="login-link">
-            <a href="Login.html">Already have an account? Login here</a>
-        </div>
-    </div>
+		<div class="login-link">
+			<a href="Login.html">Already have an account? Login here</a>
+		</div>
+	</div>
 </body>
 </html>
