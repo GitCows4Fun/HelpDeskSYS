@@ -1,16 +1,7 @@
+console.log("Loaded dashboard.js");
 
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8008';
-
-function getUserData() {
-	return {
-		authKey: localStorage.getItem('authKey'),
-		userId: localStorage.getItem('userId'),
-		username: localStorage.getItem('username'),
-		email: localStorage.getItem('userEmail')
-	};
-}
-
 
 // Global variables accessible to all functions
 let authKey = null;
@@ -33,12 +24,20 @@ document.addEventListener('DOMContentLoaded', () => {
 	authKey = getAuthKey();
 	userData = getUserData();
 
-	if (!authKey || !userData.username) {
-		localStorage.removeItem('authKey');
-		localStorage.removeItem('userId');
-		localStorage.removeItem('username');
-		localStorage.removeItem('userEmail');
-		window.location.href = 'login';
+	if (!authKey) {
+		console.log('authKey:', localStorage.getItem('authKey'));
+		console.log('userData:', {
+    	userId: localStorage.getItem('userId'),
+    	userEmail: localStorage.getItem('userEmail'),
+    	username: localStorage.getItem('username')
+	});
+
+
+		// localStorage.removeItem('authKey');
+		// localStorage.removeItem('userId');
+		// localStorage.removeItem('username');
+		// localStorage.removeItem('userEmail');
+		// window.location.href = 'login';
 		return;
 	}
 

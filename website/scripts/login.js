@@ -70,9 +70,17 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 localStorage.setItem('userId', authData.userid);
                 localStorage.setItem('userEmail', email);
                 localStorage.setItem('username', username);
-                
+
+                console.log('Checking auth...');
+                console.log('authKey:', localStorage.getItem('authKey'));
+                console.log('userData:', {
+                    userId: localStorage.getItem('userId'),
+                    userEmail: localStorage.getItem('userEmail'),
+                    username: localStorage.getItem('username')
+                });
+
                 // Redirect to dashboard after successful authentication
-                window.location.href = '';
+                window.location.href = '../';
             } else {
                 throw new Error('Authentication failed');
             }
