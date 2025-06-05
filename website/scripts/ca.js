@@ -1,29 +1,172 @@
-function createAccount(event) {
-  event.preventDefault();
-  const email = document.getElementById('username').value.trim().toLowerCase();
-  const password = document.getElementById('password').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
 
-  if (!email.endsWith('@gmail.com')) {
-    alert('Only Gmail addresses are allowed.');
-    return;
-  }
+// API Configuration
+const API_BASE_URL = 'http://127.0.0.1:8008';
 
-  if (password !== confirmPassword) {
-    alert('Passwords do not match!');
-    return;
-  }
-
-  let users = JSON.parse(localStorage.getItem('users') || '{}');
-
-  if (users[email]) {
-    alert('An account with this Gmail already exists.');
-    return;
-  }
-
-  users[email] = { password };
-  localStorage.setItem('users', JSON.stringify(users));
-
-  alert(`Account created for ${email}`);
-  window.location.href = 'login.html'; // Corrected to .html
+// Utility function to generate SHA256 hash
+async function generateSHA256(message) {
+	const msgBuffer = new TextEncoder().encode(message);
+	const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+	return hashHex;
 }
+
+// API function to create new user
+async function createNewUser(email, password, firstName, lastName) {
+	try {
+		const passwordHash = await generateSHA256(password);
+		const commonName = `${firstName} ${lastName}`.trim();
+		
+		const response = await fetch(`${API_BASE_URL}/api/0/POST/newuser`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				email: email,
+				pw_hash: passwordHash,
+				commonName: commonName
+			})
+		});
+
+		if (response.status === 201) {
+			return { success: true };
+		} else if (response.status === 400) {
+			return { success: false, error: 'Invalid user data provided or user already exists' };
+		} else if (response.status === 403) {
+			return { success: false, error: 'Request blocked for security reasons' };
+		} else {
+			return { success: false, error: `Server error: ${response.status}` };
+		}
+	} catch (error) {
+		return { success: false, error: 'Network error: Unable to connect to server' };
+	}
+}
+
+// Form validation
+const form = document.getElementById('signupForm');
+const submitBtn = document.getElementById('submitBtn');
+const errorMessage = document.getElementById('errorMessage');
+const successMessage = document.getElementById('successMessage');
+
+// Validation functions
+function validateEmail(email) {
+	const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return re.test(email);
+}
+
+function validatePassword(password) {
+	const requirements = {
+		length: password.length >= 6,
+		uppercase: /[A-Z]/.test(password),
+		lowercase: /[a-z]/.test(password),
+		number: /\d/.test(password)
+	};
+	return requirements;
+}
+
+function updatePasswordStrength(password) {
+	const requirements = validatePassword(password);
+	const strengthFill = document.getElementById('strengthFill');
+	
+	// Update requirement indicators
+	document.getElementById('req-length').className = requirements.length ? 'valid' : 'invalid';
+	document.getElementById('req-uppercase').className = requirements.uppercase ? 'valid' : 'invalid';
+	document.getElementById('req-lowercase').className = requirements.lowercase ? 'valid' : 'invalid';
+	document.getElementById('req-number').className = requirements.number ? 'valid' : 'invalid';
+
+	// Calculate strength
+	const validCount = Object.values(requirements).filter(Boolean).length;
+	const strengthPercent = (validCount / 4) * 100;
+	
+	strengthFill.style.width = strengthPercent + '%';
+	
+	// Set strength class
+	strengthFill.className = 'strength-fill';
+	if (validCount === 1) strengthFill.classList.add('strength-weak');
+	else if (validCount === 2) strengthFill.classList.add('strength-fair');
+	else if (validCount === 3) strengthFill.classList.add('strength-good');
+	else if (validCount === 4) strengthFill.classList.add('strength-strong');
+
+	return validCount === 4;
+}
+
+function updateFeedback(elementId, isValid) {
+	const feedback = document.getElementById(elementId);
+	feedback.textContent = isValid ? '✓' : '✗';
+	feedback.className = 'input-feedback ' + (isValid ? 'valid' : 'invalid');
+}
+
+function checkFormValidity() {
+	const firstName = document.getElementById('firstName').value.trim();
+	const lastName = document.getElementById('lastName').value.trim();
+	const email = document.getElementById('email').value.trim();
+	const username = document.getElementById('username').value.trim();
+	const password = document.getElementById('password').value;
+	const confirmPassword = document.getElementById('confirmPassword').value;
+	const role = document.getElementById('role').value;
+
+	const isFirstNameValid = firstName.length > 0;
+	const isLastNameValid = lastName.length > 0;
+	const isEmailValid = validateEmail(email);
+	const isUsernameValid = username.length >= 3;
+	const isPasswordValid = updatePasswordStrength(password);
+	const isConfirmPasswordValid = password === confirmPassword && password.length > 0;
+	const isRoleValid = role !== '';
+
+	updateFeedback('firstNameFeedback', isFirstNameValid);
+	updateFeedback('lastNameFeedback', isLastNameValid);
+	updateFeedback('emailFeedback', isEmailValid);
+	updateFeedback('usernameFeedback', isUsernameValid);
+	updateFeedback('passwordFeedback', isPasswordValid);
+	updateFeedback('confirmPasswordFeedback', isConfirmPasswordValid);
+
+	const isFormValid = isFirstNameValid && isLastNameValid && isEmailValid && 
+						isUsernameValid && isPasswordValid && isConfirmPasswordValid && isRoleValid;
+
+	submitBtn.disabled = !isFormValid;
+	return isFormValid;
+}
+
+// Event listeners for real-time validation
+['firstName', 'lastName', 'email', 'username', 'password', 'confirmPassword', 'role'].forEach(id => {
+	document.getElementById(id).addEventListener('input', checkFormValidity);
+});
+
+// Form submission
+form.addEventListener('submit', async function(e) {
+	e.preventDefault();
+	
+	const formData = new FormData(form);
+	const firstName = formData.get('firstName').trim();
+	const lastName = formData.get('lastName').trim();
+	const email = formData.get('email').trim();
+	const password = formData.get('password');
+	
+	// Disable submit button during account creation
+	const submitButton = e.target.querySelector('button[type="submit"]');
+	submitButton.disabled = true;
+	submitButton.textContent = 'Creating Account...';
+	
+	const result = await createNewUser(email, password, firstName, lastName);
+	
+	if (result.success) {
+		// Show success message
+		successMessage.textContent = 'Account created successfully! Redirecting to login...';
+		successMessage.style.display = 'block';
+		errorMessage.style.display = 'none';
+
+		// Redirect to login page after 2 seconds
+		setTimeout(() => {
+			window.location.href = 'Login.html';
+		}, 2000);
+	} else {
+		errorMessage.textContent = result.error;
+		errorMessage.style.display = 'block';
+		successMessage.style.display = 'none';
+		
+		// Re-enable submit button
+		submitButton.disabled = false;
+		submitButton.textContent = 'Create Account';
+	}
+});
