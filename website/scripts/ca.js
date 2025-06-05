@@ -158,7 +158,7 @@ form.addEventListener('submit', async function(e) {
 
 		// Redirect to login page after 2 seconds
 		setTimeout(() => {
-			window.location.href = 'Login.html';
+			window.location.href = 'login';
 		}, 2000);
 	} else {
 		errorMessage.textContent = result.error;

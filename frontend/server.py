@@ -232,6 +232,7 @@ class apiHandler(str):
 		target = endpoint.removeprefix('/api/0/POST/')
 		postd = json.loads(data.decode('utf-8'))
 		
+		logger({"Raw JSON parsed": postd}, title="Parsed POST")
 		logger({"Data": data.decode("utf-8")}, title="POST request data")
 
 		if target == 'login':
@@ -390,7 +391,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			if self.path == ('/' or ''):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
-				with open(WEB_ROOT+'/index.html', 'rb') as file:
+				with open(WEB_ROOT+'/dashboard.html', 'rb') as file:
 					html_content = file.read()
 				file_size = len(html_content)
 				self.send_header('Content-length', str(file_size))

@@ -20,7 +20,7 @@ function isAuthKeyExpired(user) {
 const currentUser = getCurrentUser();
 if (!currentUser || isAuthKeyExpired(currentUser)) {
 	sessionStorage.removeItem('currentUser');
-	window.location.href = 'Login.html';
+	window.location.href = 'login';
 } else {
 	// Display user welcome message
 	document.getElementById('userWelcome').textContent = `Welcome, ${currentUser.username}`;
@@ -45,7 +45,7 @@ async function fetchTickets() {
 		} else if (response.status === 401) {
 			// Authentication expired
 			sessionStorage.removeItem('currentUser');
-			window.location.href = 'Login.html';
+			window.location.href = 'login';
 			return { success: false, error: 'Session expired' };
 		} else {
 			return { success: false, error: `Server error: ${response.status}` };
@@ -75,7 +75,7 @@ async function createTicket(title, description) {
 		} else if (response.status === 401) {
 			// Authentication expired
 			sessionStorage.removeItem('currentUser');
-			window.location.href = 'Login.html';
+			window.location.href = 'login';
 			return { success: false, error: 'Session expired' };
 		} else if (response.status === 400) {
 			return { success: false, error: 'Invalid ticket data provided' };

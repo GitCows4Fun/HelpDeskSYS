@@ -2,7 +2,7 @@
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8008';
 
-// Utility function to generate SHA256 hash
+// Generate SHA256 hash for password security
 async function generateSHA256(message) {
 	const msgBuffer = new TextEncoder().encode(message);
 	const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -11,100 +11,83 @@ async function generateSHA256(message) {
 	return hashHex;
 }
 
-// Save current user session and authentication key
-function saveCurrentUser(userInfo) {
-	sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
-}
-
-// API login function
-async function loginUser(email, password) {
-	try {
-		const passwordHash = await generateSHA256(password);
-		
-		const response = await fetch(`${API_BASE_URL}/api/0/POST/login`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
+// Handle login button click
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); // Prevent default form submission
+	e.stopPropagation();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errorMessage = document.getElementById('errorMessage');
+    const loginButton = document.getElementById('loginButton');
+    
+    // Validate input fields
+    if (!username || !password) {
+        errorMessage.textContent = 'Please enter both email and password.';
+        errorMessage.style.display = 'block';
+        return;
+    }
+    
+    // Update UI state during authentication
+    loginButton.disabled = true;
+    loginButton.textContent = 'Logging in...';
+    errorMessage.style.display = 'none';
+    
+    // Convert username to email format if needed
+    const email = username.includes('@') ? username : `${username}@helpdesk.sys`;
+    
+    try {
+        // Hash password for API transmission
+        const passwordHash = await generateSHA256(password);
+        
+        // Send authentication request to API
+        const response = await fetch(`${API_BASE_URL}/api/0/POST/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
 			body: JSON.stringify({
 				email: email,
 				password_hash: passwordHash
-			})
-		});
+		})
+        });
 
-		if (response.status === 200) {
-			const result = await response.json();
-			return {
-				success: true,
-				data: result
-			};
-		} else if (response.status === 400) {
-			return {
-				success: false,
-				error: 'Invalid credentials provided'
-			};
-		} else if (response.status === 401) {
-			return {
-				success: false,
-				error: 'Authentication failed'
-			};
-		} else {
-			return {
-				success: false,
-				error: `Server error: ${response.status}`
-			};
-		}
-	} catch (error) {
-		return {
-			success: false,
-			error: 'Network error: Unable to connect to server'
-		};
-	}
-}
-
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
-	e.preventDefault();
-	
-	const username = document.getElementById('username').value.trim();
-	const password = document.getElementById('password').value;
-	const errorMessage = document.getElementById('errorMessage');
-	
-	// Hide any previous error messages
-	errorMessage.style.display = 'none';
-	
-	// Disable submit button during login attempt
-	const submitButton = e.target.querySelector('button[type="submit"]');
-	submitButton.disabled = true;
-	submitButton.textContent = 'Logging in...';
-	
-	// For demo purposes, treat username as email if it contains @, otherwise append domain
-	const email = username.includes('@') ? username : `${username}@helpdesk.com`;
-	
-	const loginResult = await loginUser(email, password);
-	
-	if (loginResult.success) {
-		// Store user session with authentication key
-		const userInfo = {
+		const payload = {
 			email: email,
-			username: username,
-			userId: loginResult.data.userid,
-			authKey: loginResult.data.key,
-			loginTime: new Date().getTime()
+			password_hash: passwordHash
 		};
-		
-		saveCurrentUser(userInfo);
-		window.location.href = 'Dashboard.html';
-	} else {
-		errorMessage.textContent = loginResult.error;
-		errorMessage.style.display = 'block';
-		
-		// Hide error message after 5 seconds
-		setTimeout(() => {
-			errorMessage.style.display = 'none';
-		}, 5000);
-	}
-	
-	// Re-enable submit button
-	submitButton.disabled = false;
-	submitButton.textContent = 'Login';
+
+		console.log('Payload to send:', payload);
+		console.log('Payload JSON:', JSON.stringify(payload));
+
+        // Process API response
+        const responseData = await response.text();
+        
+        if (responseData.startsWith('{')) {
+            const authData = JSON.parse(responseData);
+            if (authData.auth_key) {
+                // Store authentication credentials
+                localStorage.setItem('authKey', authData.auth_key);
+                localStorage.setItem('userId', authData.userid);
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('username', username);
+                
+                // Redirect to dashboard after successful authentication
+                window.location.href = 'Dashboard.html';
+            } else {
+                throw new Error('Authentication failed');
+            }
+        } else {
+            throw new Error(responseData);
+        }
+        
+    } catch (error) {
+        // Handle network or request errors
+        console.error('Authentication error:', error);
+        errorMessage.textContent = 'Unable to authenticate. Please check your credentials.';
+        errorMessage.style.display = 'block';
+    }
+    
+    // Reset UI state
+    loginButton.disabled = false;
+    loginButton.textContent = '💖 Login';
 });
