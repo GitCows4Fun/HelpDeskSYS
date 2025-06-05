@@ -27,17 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
 	if (!authKey) {
 		console.log('authKey:', localStorage.getItem('authKey'));
 		console.log('userData:', {
-    	userId: localStorage.getItem('userId'),
-    	userEmail: localStorage.getItem('userEmail'),
-    	username: localStorage.getItem('username')
+		userId: localStorage.getItem('userId'),
+		userEmail: localStorage.getItem('userEmail'),
+		username: localStorage.getItem('username')
 	});
 
 
-		// localStorage.removeItem('authKey');
-		// localStorage.removeItem('userId');
-		// localStorage.removeItem('username');
-		// localStorage.removeItem('userEmail');
-		// window.location.href = 'login';
+		localStorage.removeItem('authKey');
+		localStorage.removeItem('userId');
+		localStorage.removeItem('username');
+		localStorage.removeItem('userEmail');
+		window.location.href = 'login';
 		return;
 	}
 
