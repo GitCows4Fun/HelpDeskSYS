@@ -334,15 +334,14 @@ class apiHandler(str):
 			return [False, 418, "Invalid endpoint"]
 
 	@staticmethod
-	def getRequestHandler(endpoint: str, data: bytes):
+	def getRequestHandler(endpoint: str):
 		target = endpoint.removeprefix('/api/0/GET/')
-		getd = json.loads(data.decode('utf-8'))
-		
-		logger({"Data": data.decode("utf-8")}, title="GET request data")
 
-		if target == 'data':
+		logger(target, "GET ticket request URI")
+
+		if target.startswith('data'):
 			try:
-				key = getd.get('key')
+				key = target.removeprefix('data?key=')
 				if not key:
 					return [False, 400, "Missing auth key"]
 			except Exception as e:
@@ -367,10 +366,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self): # API Endpoints
 		logger(self)
 		if self.path.startswith('/api/0/GET/'):
-			try: content_length = int(self.headers['Content-Length'])
-			except Exception: self.send_response(411); self.end_headers(); return
-			get_data = self.rfile.read(content_length)
-			response = apiHandler.getRequestHandler(endpoint = self.path, data = get_data)
+			response = apiHandler.getRequestHandler(endpoint = self.path)
 			self.send_response(response[1])
 			logger(response, "GET response")
 			self.send_header('Content-Type', 'application/json')

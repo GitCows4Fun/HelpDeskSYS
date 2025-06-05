@@ -5,91 +5,89 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Helpdesk Dashboard</title>
 	<link rel="stylesheet" href="style/dashboard.css">
-	<script src="scripts/dashboard.js"></script>
 </head>
 <body>
-	<div class="header">
-		<h1>HelpDesk Pro Dashboard</h1>
-		<div class="user-info">
-			<span id="userWelcome">Welcome, User</span>
-			<button class="logout-btn" onclick="logout()">Logout</button>
-		</div>
-	</div>
+    <div class="header">
+        <h1>Hello Kitty HelpDesk Dashboard</h1>
+        <div class="user-info">
+            <span id="userWelcome">Welcome, User</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
 
-	<div class="main-content">
-		<div class="stats-grid">
-			<div class="stat-card">
-				<h3 id="totalTickets">0</h3>
-				<p>Total Tickets</p>
-			</div>
-			<div class="stat-card">
-				<h3 id="openTickets">0</h3>
-				<p>Open Tickets</p>
-			</div>
-			<div class="stat-card">
-				<h3 id="inProgressTickets">0</h3>
-				<p>In Progress</p>
-			</div>
-			<div class="stat-card">
-				<h3 id="resolvedTickets">0</h3>
-				<p>Resolved</p>
-			</div>
-		</div>
+    <div class="main-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3 id="totalTickets">0</h3>
+                <p>Total Tickets</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="openTickets">0</h3>
+                <p>Open Tickets</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="inProgressTickets">0</h3>
+                <p>In Progress</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="resolvedTickets">0</h3>
+                <p>Resolved</p>
+            </div>
+        </div>
 
-		<div class="tickets-section">
-			<div class="section-header">
-				<h2>Support Tickets</h2>
-				<button class="add-ticket-btn" onclick="openAddTicketModal()">+ Add New Ticket</button>
-			</div>
-			
-			<div id="ticketsTableContainer">
-				<table class="tickets-table">
-					<thead>
-						<tr>
-							<th>ID</th>
-							<th>Subject</th>
-							<th>Priority</th>
-							<th>Status</th>
-							<th>Created</th>
-							<th>Actions</th>
-						</tr>
-					</thead>
-					<tbody id="ticketsTableBody">
-						<!-- Tickets will be populated here -->
-					</tbody>
-				</table>
-			</div>
-		</div>
-	</div>
+        <div class="tickets-section">
+            <div class="section-header">
+                <h2>Support Tickets</h2>
+                <button class="add-ticket-btn" onclick="openAddTicketModal()">+ Add New Ticket</button>
+            </div>
+            
+            <div id="ticketsTableContainer">
+                <table class="tickets-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Subject</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsTableBody">
+                        <!-- Tickets will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-	<!-- Add Ticket Modal -->
-	<div id="addTicketModal" class="modal">
-		<div class="modal-content">
-			<span class="close" onclick="closeAddTicketModal()">&times;</span>
-			<h2>Create New Ticket</h2>
-			<form id="addTicketForm">
-				<div class="form-group">
-					<label for="ticketSubject">Subject</label>
-					<input type="text" id="ticketSubject" name="subject" required>
-				</div>
-				
-				<div class="form-group">
-					<label for="ticketPriority">Priority</label>
-					<select id="ticketPriority" name="priority" required>
-						<option value="low">Low</option>
-						<option value="medium" selected>Medium</option>
-						<option value="high">High</option>
-					</select>
-				</div>
-				
-				<div class="form-group">
-					<label for="ticketDescription">Description</label>
-					<textarea id="ticketDescription" name="description" placeholder="Describe the issue..." required></textarea>
-				</div>
-				
-				<button type="submit" class="submit-btn">Create Ticket</button>
-			</form>
-		</div>
-	</div>
+    <!-- Add Ticket Modal -->
+    <div id="addTicketModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddTicketModal()">&times;</span>
+            <h2>Create New Ticket</h2>
+            <form id="addTicketForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="ticketSubject">Subject</label>
+                    <input type="text" id="ticketSubject" name="subject" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ticketPriority">Priority</label>
+                    <select id="ticketPriority" name="priority" required>
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ticketDescription">Description</label>
+                    <textarea id="ticketDescription" name="description" placeholder="Describe the issue..." required></textarea>
+                </div>
+                <button type="button" class="submit-btn" id="createTicketButton">Create Ticket</button>
+            </form>
+        </div>
+    </div>
+	<script src="scripts/dashboard.js"></script>
 </body>
 </html>
