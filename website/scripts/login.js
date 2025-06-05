@@ -72,7 +72,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 localStorage.setItem('username', username);
                 
                 // Redirect to dashboard after successful authentication
-                window.location.href = '';
+                window.location.href = 'dashboard.html';
             } else {
                 throw new Error('Authentication failed');
             }

@@ -20,13 +20,16 @@ function getUserData() {
 const authKey = getAuthKey();
 const userData = getUserData();
 
+// Add debugging to see what values we have
+console.log('Auth Key:', authKey);
+console.log('User Data:', userData);
+console.log('Username specifically:', userData.username);
+
 if (!authKey || !userData.username) {
-	// Clear any invalid authentication data
-	localStorage.removeItem('authKey');
-	localStorage.removeItem('userId');
-	localStorage.removeItem('username');
-	localStorage.removeItem('userEmail');
-	window.location.href = 'Login.html';
+    console.log('Authentication failed - redirecting to login');
+    // Clear any invalid authentication data
+    localStorage.clear();
+    window.location.href = 'login.html';
 } else {
 	// Display user welcome message
 	document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
