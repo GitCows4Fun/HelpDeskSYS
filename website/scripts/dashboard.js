@@ -1,8 +1,9 @@
-
-// API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8008';
 
-// Load authentication data from localStorage (matching login.js implementation)
+// Global variables accessible to all functions
+let authKey = null;
+let userData = null;
+
 function getAuthKey() {
 	return localStorage.getItem('authKey');
 }
@@ -16,10 +17,20 @@ function getUserData() {
 	};
 }
 
-// Check if user is authenticated and redirect if not
-const authKey = getAuthKey();
-const userData = getUserData();
+document.addEventListener('DOMContentLoaded', () => {
+	authKey = getAuthKey();
+	userData = getUserData();
 
+	if (!authKey || !userData.username) {
+		localStorage.removeItem('authKey');
+		localStorage.removeItem('userId');
+		localStorage.removeItem('username');
+		localStorage.removeItem('userEmail');
+		window.location.href = 'login';
+		return;
+	}
+
+<<<<<<< HEAD
 // Add debugging to see what values we have
 console.log('Auth Key:', authKey);
 console.log('User Data:', userData);
@@ -32,107 +43,97 @@ if (!authKey || !userData.username) {
     window.location.href = 'login.html';
 } else {
 	// Display user welcome message
+=======
+>>>>>>> 91d25043cbc16a969c017faeb2119d4c002d4790
 	document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
-}
+
+	// Now safe to call functions that use authKey
+	loadTickets();
+});
 
 // API function to fetch tickets
 async function fetchTickets() {
+    try {
+        const encodedKey = encodeURIComponent(authKey);
+        console.log('Fetching tickets with auth key:', authKey);
+
+        const response = await fetch(`${API_BASE_URL}/api/0/GET/data?key=${encodedKey}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+            // No body — GET requests can't have one
+        });
+
+        console.log('Fetch tickets response status:', response.status);
+
+        if (response.status === 200) {
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
+
+            let tickets;
+            try {
+                tickets = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('Failed to parse tickets response:', parseError);
+                return { success: false, error: 'Invalid response format from server' };
+            }
+
+            console.log('Parsed tickets:', tickets);
+            return { success: true, data: tickets };
+        } else if (response.status === 401) {
+            console.log('Authentication expired during ticket fetch');
+            localStorage.clear();
+            window.location.href = 'Login.html';
+            return { success: false, error: 'Session expired' };
+        } else {
+            const errorText = await response.text();
+            console.error('Server error fetching tickets:', response.status, errorText);
+            return { success: false, error: `Server error: ${response.status}` };
+        }
+    } catch (error) {
+        console.error('Network error fetching tickets:', error);
+        return { success: false, error: 'Network error: Unable to connect to server' };
+    }
+}
+
+
+// API function to create a new ticket
+async function createTicket(title, description) {
 	try {
-		console.log('Fetching tickets with auth key:', authKey);
-		
-		const response = await fetch(`${API_BASE_URL}/api/0/GET/data`, {
-			method: 'GET',
+		const response = await fetch(`${API_BASE_URL}/api/0/POST/data`, {
+			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
+				title: title,
+				description: description,
 				key: authKey
 			})
 		});
 
-		console.log('Fetch tickets response status:', response.status);
-		
-		if (response.status === 200) {
-			const responseText = await response.text();
-			console.log('Raw response:', responseText);
-			
-			let tickets;
-			try {
-				tickets = JSON.parse(responseText);
-			} catch (parseError) {
-				console.error('Failed to parse tickets response:', parseError);
-				return { success: false, error: 'Invalid response format from server' };
-			}
-			
-			console.log('Parsed tickets:', tickets);
-			return { success: true, data: tickets };
+		if (response.status === 201) {
+			return { success: true };
 		} else if (response.status === 401) {
-			console.log('Authentication expired during ticket fetch');
+			// Authentication expired - clear localStorage and redirect
 			localStorage.removeItem('authKey');
 			localStorage.removeItem('userId');
 			localStorage.removeItem('username');
 			localStorage.removeItem('userEmail');
 			window.location.href = 'Login.html';
 			return { success: false, error: 'Session expired' };
+		} else if (response.status === 400) {
+			return { success: false, error: 'Invalid ticket data provided' };
+		} else if (response.status === 403) {
+			return { success: false, error: 'Request blocked for security reasons' };
 		} else {
-			const errorText = await response.text();
-			console.error('Server error fetching tickets:', response.status, errorText);
 			return { success: false, error: `Server error: ${response.status}` };
 		}
 	} catch (error) {
-		console.error('Network error fetching tickets:', error);
 		return { success: false, error: 'Network error: Unable to connect to server' };
 	}
 }
-
-// API function to create a new ticket
-async function fetchTickets() {
-	try {
-		console.log('Fetching tickets with auth key:', authKey);
-
-		// Encode key in the query string
-		const encodedKey = encodeURIComponent(authKey);
-		const url = `${API_BASE_URL}/api/0/GET/data?key=${encodedKey}`;
-
-		const response = await fetch(url, {
-			method: 'GET',
-			headers: {
-				'Accept': 'application/json',
-			}
-		});
-
-		console.log('Fetch tickets response status:', response.status);
-
-		if (response.status === 200) {
-			const responseText = await response.text();
-			console.log('Raw response:', responseText);
-
-			let tickets;
-			try {
-				tickets = JSON.parse(responseText);
-			} catch (parseError) {
-				console.error('Failed to parse tickets response:', parseError);
-				return { success: false, error: 'Invalid response format from server' };
-			}
-
-			console.log('Parsed tickets:', tickets);
-			return { success: true, data: tickets };
-		} else if (response.status === 401) {
-			console.log('Authentication expired during ticket fetch');
-			localStorage.clear();
-			window.location.href = 'Login.html';
-			return { success: false, error: 'Session expired' };
-		} else {
-			const errorText = await response.text();
-			console.error('Server error fetching tickets:', response.status, errorText);
-			return { success: false, error: `Server error: ${response.status}` };
-		}
-	} catch (error) {
-		console.error('Network error fetching tickets:', error);
-		return { success: false, error: 'Network error: Unable to connect to server' };
-	}
-}
-
 
 // Initialize tickets array
 let tickets = [];
@@ -272,6 +273,3 @@ window.onclick = function(event) {
 		closeAddTicketModal();
 	}
 }
-
-// Initialize dashboard
-loadTickets();
