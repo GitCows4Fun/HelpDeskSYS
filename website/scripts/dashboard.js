@@ -46,16 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
 	console.log('User Data:', userData);
 	console.log('Username specifically:', userData.username);
 
-    document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
-    loadTickets();
+	document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
+	loadTickets();
 });
 
 // API function to create a new ticket
 async function fetchTickets() {
 	try {
 		console.log('Fetching tickets with auth key:', authKey);
-
-		// Encode key in the query string
 		const encodedKey = encodeURIComponent(authKey);
 		const url = `${API_BASE_URL}/api/0/GET/data?key=${encodedKey}`;
 
@@ -72,16 +70,22 @@ async function fetchTickets() {
 			const responseText = await response.text();
 			console.log('Raw response:', responseText);
 
-			let tickets;
+			let result;
 			try {
-				tickets = JSON.parse(responseText);
+				result = JSON.parse(responseText);
 			} catch (parseError) {
 				console.error('Failed to parse tickets response:', parseError);
 				return { success: false, error: 'Invalid response format from server' };
 			}
 
-			console.log('Parsed tickets:', tickets);
-			return { success: true, data: tickets };
+			if (Array.isArray(result) && result.length === 3 && result[0] === true) {
+				const tickets = result[2];
+				console.log('Parsed tickets:', tickets);
+				return { success: true, data: tickets };
+			} else {
+				console.error('Unexpected response structure:', result);
+				return { success: false, error: 'Unexpected response structure' };
+			}
 		} else if (response.status === 401) {
 			console.log('Authentication expired during ticket fetch');
 			localStorage.clear();

@@ -155,13 +155,18 @@ class SQLConnector():
 				cursor.close(); connection.close(); script.close()
 			tickets = []
 			for row in data:
-				temp = ''.join(str(row).strip().removeprefix('(').removesuffix(')').split(' ')).split(',')
 				# print(f"temp: {temp}")
-				logger(temp, "Ticket GET data")
-				tickets.append({'ticketID':int(temp[0]), 'userID':int(temp[1]), 'title':temp[2], 'description':temp[3]})
+				ticket = {
+					'ticketID': int(row[0]),
+					'userID': int(row[1]),
+					'title': row[2],
+					'description': row[3]
+				}
+				logger(ticket, "Ticket GET data")
+				tickets.append(ticket)
 			return [True, 200, tickets]
-		except ConnectionError: return [False, 500]
-		except mysql.connector.Error: return [False, 500]
+		except ConnectionError as e: logger(e, "DB failure"); return [False, 500]
+		except mysql.connector.Error as e: logger(e, "DB failure"); return [False, 500]
 		except IndexError or TypeError or ValueError: return [False, 400]
 		except Exception: return [False, 404]
 
@@ -169,21 +174,32 @@ class SQLConnector():
 	def addTicket(type = ticketType.NewTicket, ticketData = []):
 		try:
 			if type == ticketType.NewUser:
-				script = f"""INSERT INTO tickets (title, description) VALUES
-		('Add new User', '{ticketData}'); """
-			else: script = f"""INSERT INTO tickets (title, description) VALUES
-		('{ticketData[0]}', '{ticketData[1]}'); """
+				script = """INSERT INTO tickets (title, description) VALUES (%s, %s)"""
+				values = ('Add new User', ticketData)
+			else:
+				user_id = ticketData[2]
+				script = """INSERT INTO tickets (users_userID, title, description) VALUES (%s, %s, %s)"""
+				values = (user_id, ticketData[0], ticketData[1])
+
 			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG)
 			if connection.is_connected():
 				cursor = connection.cursor()
-				cursor.execute(script)
+				cursor.execute(script, values)
 				connection.commit()
-			cursor.close()
-			connection.close()
-		except ConnectionError: return [False, 500]
-		except mysql.connector.Error: return [False, 500]
-		except IndexError or TypeError or ValueError: raise; return [False, 400]
-		except Exception: return [False, 404]
+				cursor.close()
+				connection.close()
+			return [True, 201]
+		except ConnectionError as e: 
+			logger(e, "DB failure")
+			return [False, 500]
+		except mysql.connector.Error as e: 
+			logger(e, "DB failure")
+			return [False, 500]
+		except IndexError or TypeError or ValueError: 
+			return [False, 400]
+		except Exception as e:
+			logger(e, "Unexpected failure")
+			return [False, 500]
 
 class VerificationTracker:
 	length = 20; number = 0; kmax = 2
@@ -290,6 +306,8 @@ class apiHandler(str):
 			if not key_valid[0]:
 				return [False, 401, "Invalid or expired key"]
 
+			user_id = key_valid[2]['userid_hash']
+
 			# Validate inputs
 			sql_title = SQLConnector.SQLINJECTIONCHECK(title)
 			sql_description = SQLConnector.SQLINJECTIONCHECK(description)
@@ -297,8 +315,8 @@ class apiHandler(str):
 			if not sql_title[0] or not sql_description[0]:
 				return [False, 403, "SQL injection detected"]
 
-			# Add ticket
-			ticket_added = SQLConnector.addTicket(ticketData=[title, description])
+			# Add ticket, now with user_id
+			ticket_added = SQLConnector.addTicket(ticketData=[title, description, user_id])
 			if not ticket_added[0]:
 				return [False, ticket_added[1], "Ticket creation failed"]
 
