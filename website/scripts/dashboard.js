@@ -59,34 +59,36 @@ async function fetchTickets() {
 
 		const response = await fetch(url, {
 			method: 'GET',
-			headers: {
-				'Accept': 'application/json',
-			}
+			headers: { 'Accept': 'application/json' },
 		});
 
 		console.log('Fetch tickets response status:', response.status);
 
 		if (response.status === 200) {
-			const responseText = await response.text();
+			let responseText = await response.text();
 			console.log('Raw response:', responseText);
 
-			// Extract actual JSON part (i.e., 3rd element in the list)
-			let extracted;
+			// Try to extract actual JSON part if wrapped inside [true, 200, [...]]
+			let jsonPart = responseText;
 			try {
-				const match = responseText.match(/\[.*?,.*?,(\[.*\])\]/s);
-				if (!match || match.length < 2) {
-					throw new Error('Could not extract valid JSON payload');
+				// Match array with at least 3 elements, capture 3rd element (which is array)
+				const wrappedMatch = responseText.match(/\[\s*true\s*,\s*200\s*,\s*(\[[\s\S]*\])\s*\]/);
+				if (wrappedMatch && wrappedMatch[1]) {
+					jsonPart = wrappedMatch[1];
+					console.log('Extracted JSON payload from wrapper:', jsonPart);
 				}
-				extracted = match[1];
-				console.log(extracted);
-			} catch (err) {
-				console.error('Failed to extract JSON from response:', err);
-				return { success: false, error: 'Malformed response structure' };
+			} catch (extractionError) {
+				console.warn('Could not extract JSON payload from wrapper, using full responseText');
 			}
+
+			// Fix single quotes to double quotes for JSON.parse
+			// Only replace single quotes around keys/values, but avoid messing with inner quotes if possible
+			// A simple hack: replace all single quotes with double quotes - may fail if strings have apostrophes inside
+			jsonPart = jsonPart.replace(/'/g, '"');
 
 			let tickets;
 			try {
-				tickets = JSON.parse(extracted);
+				tickets = JSON.parse(jsonPart);
 			} catch (parseError) {
 				console.error('Failed to parse tickets JSON:', parseError);
 				return { success: false, error: 'Invalid JSON format' };
@@ -94,6 +96,7 @@ async function fetchTickets() {
 
 			console.log('Parsed tickets:', tickets);
 			return { success: true, data: tickets };
+
 		} else if (response.status === 401) {
 			console.log('Authentication expired during ticket fetch');
 			localStorage.clear();

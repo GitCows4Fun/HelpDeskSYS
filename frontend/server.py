@@ -171,24 +171,32 @@ class SQLConnector():
 		except Exception: return [False, 404]
 
 	@staticmethod
-	def addTicket(type = ticketType.NewTicket, ticketData = []):
+	def addTicket(type=ticketType.NewTicket, ticketData=[]):
 		try:
-			if type == ticketType.NewUser:
-				script = """INSERT INTO tickets (title, description) VALUES (%s, %s)"""
-				values = ('Add new User', ticketData)
-			else:
-				user_id = ticketData[2]
-				script = """INSERT INTO tickets (users_userID, title, description) VALUES (%s, %s, %s)"""
-				values = (user_id, ticketData[0], ticketData[1])
-
 			connection = mysql.connector.connect(**SQLConnector.DB_CONFIG)
 			if connection.is_connected():
 				cursor = connection.cursor()
+
+				# Get current max ticketID
+				cursor.execute("SELECT MAX(ticketID) FROM tickets;")
+				max_id = cursor.fetchone()[0] or 0
+				new_ticket_id = max_id + 1
+
+				if type == ticketType.NewUser:
+					script = """INSERT INTO tickets (ticketID, title, description) VALUES (%s, %s, %s)"""
+					values = (new_ticket_id, 'Add new User', ticketData)
+				else:
+					user_id = ticketData[2]
+					script = """INSERT INTO tickets (ticketID, users_userID, title, description) VALUES (%s, %s, %s, %s)"""
+					values = (new_ticket_id, user_id, ticketData[0], ticketData[1])
+
 				cursor.execute(script, values)
 				connection.commit()
 				cursor.close()
 				connection.close()
+
 			return [True, 201]
+
 		except ConnectionError as e: 
 			logger(e, "DB failure")
 			return [False, 500]
