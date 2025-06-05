@@ -70,22 +70,30 @@ async function fetchTickets() {
 			const responseText = await response.text();
 			console.log('Raw response:', responseText);
 
-			let result;
+			// Extract actual JSON part (i.e., 3rd element in the list)
+			let extracted;
 			try {
-				result = JSON.parse(responseText);
-			} catch (parseError) {
-				console.error('Failed to parse tickets response:', parseError);
-				return { success: false, error: 'Invalid response format from server' };
+				const match = responseText.match(/\[.*?,.*?,(\[.*\])\]/s);
+				if (!match || match.length < 2) {
+					throw new Error('Could not extract valid JSON payload');
+				}
+				extracted = match[1];
+				console.log(extracted);
+			} catch (err) {
+				console.error('Failed to extract JSON from response:', err);
+				return { success: false, error: 'Malformed response structure' };
 			}
 
-			if (Array.isArray(result) && result.length === 3 && result[0] === true) {
-				const tickets = result[2];
-				console.log('Parsed tickets:', tickets);
-				return { success: true, data: tickets };
-			} else {
-				console.error('Unexpected response structure:', result);
-				return { success: false, error: 'Unexpected response structure' };
+			let tickets;
+			try {
+				tickets = JSON.parse(extracted);
+			} catch (parseError) {
+				console.error('Failed to parse tickets JSON:', parseError);
+				return { success: false, error: 'Invalid JSON format' };
 			}
+
+			console.log('Parsed tickets:', tickets);
+			return { success: true, data: tickets };
 		} else if (response.status === 401) {
 			console.log('Authentication expired during ticket fetch');
 			localStorage.clear();
