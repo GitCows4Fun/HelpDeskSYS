@@ -211,7 +211,8 @@ class VerificationTracker:
 					'uid': userid
 				}
 				VerificationTracker.number += 1
-				logger(VerificationTracker.keyArray[i], "Key registration")
+				logger(VerificationTracker.keyArray[i], f"Key registration for user {userid}, keyarray index {i}")
+				logger(VerificationTracker.keyArray, "Key array state")
 				return i
 		return None  # Should rarely occur
 
