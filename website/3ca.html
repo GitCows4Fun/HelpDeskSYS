@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Helpdesk</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 50%, #FFE4E1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 192, 203, 0.3) 0%, transparent 50%);
+        }
+
+        .signup-container {
+            background: white;
+            padding: 40px;
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3);
+            width: 100%;
+            max-width: 500px;
+            border: 3px solid #FFB6C1;
+            position: relative;
+        }
+
+        .signup-container::before {
+            content: "🌸";
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            font-size: 30px;
+            background: white;
+            padding: 0 10px;
+        }
+
+        .signup-container::after {
+            content: "🎀";
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            font-size: 30px;
+            background: white;
+            padding: 0 10px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #FF69B4;
+            font-size: 32px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+        }
+
+        .logo h1::before {
+            content: "🌸 ";
+        }
+
+        .logo h1::after {
+            content: " 🌸";
+        }
+
+        .logo p {
+            color: #FF1493;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #FF1493;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 3px solid #FFB6C1;
+            border-radius: 15px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #FFF5EE;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #FF69B4;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+            transform: scale(1.02);
+        }
+
+        .password-requirements {
+            font-size: 13px;
+            color: #FF69B4;
+            margin-top: 8px;
+            background: #FFF0F5;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #FFE4E1;
+        }
+
+        .password-requirements ul {
+            margin-left: 15px;
+            margin-top: 5px;
+        }
+
+        .password-requirements li {
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+
+        .password-requirements li.valid {
+            color: #FF1493;
+        }
+
+        .password-requirements li.valid::before {
+            content: "💖 ";
+        }
+
+        .password-requirements li.invalid {
+            color: #FFB6C1;
+        }
+
+        .password-requirements li.invalid::before {
+            content: "🌸 ";
+        }
+
+        .signup-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
+        }
+
+        .signup-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.6);
+        }
+
+        .signup-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background: linear-gradient(135deg, #FFB6C1 0%, #FFE4E1 100%);
+        }
+
+        .signup-btn::before {
+            content: "✨ ";
+        }
+
+        .error-message {
+            color: #FF1493;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+            background: #FFE4E1;
+            padding: 12px;
+            border-radius: 15px;
+            border: 2px solid #FFB6C1;
+            font-weight: bold;
+        }
+
+        .success-message {
+            color: #FF1493;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFE4E1 100%);
+            padding: 12px;
+            border-radius: 15px;
+            border: 2px solid #FF69B4;
+            font-weight: bold;
+        }
+
+        .success-message::before {
+            content: "🎉 ";
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .login-link a {
+            color: #FF69B4;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+            color: #FF1493;
+        }
+
+        .login-link a::before {
+            content: "💕 ";
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-feedback {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+        }
+
+        .input-feedback.valid {
+            color: #28a745;
+        }
+
+        .input-feedback.invalid {
+            color: #dc3545;
+        }
+
+        .strength-meter {
+            height: 4px;
+            background: #e1e1e1;
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .strength-weak {
+            background-color: #dc3545;
+        }
+
+        .strength-fair {
+            background-color: #ffc107;
+        }
+
+        .strength-good {
+            background-color: #fd7e14;
+        }
+
+        .strength-strong {
+            background-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="logo">
+            <h1>Hello Kitty HelpDesk</h1>
+            <p>Join Our Kawaii Community! 🌟</p>
+        </div>
+
+        <form id="signupForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <div class="input-group">
+                        <input type="text" id="firstName" name="firstName" required>
+                        <span class="input-feedback" id="firstNameFeedback"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <div class="input-group">
+                        <input type="text" id="lastName" name="lastName" required>
+                        <span class="input-feedback" id="lastNameFeedback"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-group">
+                    <input type="email" id="email" name="email" required>
+                    <span class="input-feedback" id="emailFeedback"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-group">
+                    <input type="text" id="username" name="username" required minlength="3">
+                    <span class="input-feedback" id="usernameFeedback"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-group">
+                    <input type="password" id="password" name="password" required minlength="6">
+                    <span class="input-feedback" id="passwordFeedback"></span>
+                </div>
+                <div class="strength-meter">
+                    <div class="strength-fill" id="strengthFill"></div>
+                </div>
+                <div class="password-requirements">
+                    <p>Password must contain:</p>
+                    <ul>
+                        <li id="req-length">At least 6 characters</li>
+                        <li id="req-uppercase">One uppercase letter</li>
+                        <li id="req-lowercase">One lowercase letter</li>
+                        <li id="req-number">One number</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="input-group">
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    <span class="input-feedback" id="confirmPasswordFeedback"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" required>
+                    <option value="">Select Role</option>
+                    <option value="user">User</option>
+                    <option value="agent">Support Agent</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+
+            <button type="submit" class="signup-btn" id="submitBtn" disabled>Create Account</button>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+        </form>
+
+        <div class="login-link">
+            <a href="Login.html">Already have an account? Login here</a>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://127.0.0.1:8008';
+
+        // Utility function to generate SHA256 hash
+        async function generateSHA256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        // API function to create new user
+        async function createNewUser(email, password, firstName, lastName) {
+            try {
+                const passwordHash = await generateSHA256(password);
+                const commonName = `${firstName} ${lastName}`.trim();
+                
+                const response = await fetch(`${API_BASE_URL}/api/0/POST/newuser`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        pw_hash: passwordHash,
+                        commonName: commonName
+                    })
+                });
+
+                if (response.status === 201) {
+                    return { success: true };
+                } else if (response.status === 400) {
+                    return { success: false, error: 'Invalid user data provided or user already exists' };
+                } else if (response.status === 403) {
+                    return { success: false, error: 'Request blocked for security reasons' };
+                } else {
+                    return { success: false, error: `Server error: ${response.status}` };
+                }
+            } catch (error) {
+                return { success: false, error: 'Network error: Unable to connect to server' };
+            }
+        }
+
+        // Form validation
+        const form = document.getElementById('signupForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // Validation functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePassword(password) {
+            const requirements = {
+                length: password.length >= 6,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password)
+            };
+            return requirements;
+        }
+
+        function updatePasswordStrength(password) {
+            const requirements = validatePassword(password);
+            const strengthFill = document.getElementById('strengthFill');
+            
+            // Update requirement indicators
+            document.getElementById('req-length').className = requirements.length ? 'valid' : 'invalid';
+            document.getElementById('req-uppercase').className = requirements.uppercase ? 'valid' : 'invalid';
+            document.getElementById('req-lowercase').className = requirements.lowercase ? 'valid' : 'invalid';
+            document.getElementById('req-number').className = requirements.number ? 'valid' : 'invalid';
+
+            // Calculate strength
+            const validCount = Object.values(requirements).filter(Boolean).length;
+            const strengthPercent = (validCount / 4) * 100;
+            
+            strengthFill.style.width = strengthPercent + '%';
+            
+            // Set strength class
+            strengthFill.className = 'strength-fill';
+            if (validCount === 1) strengthFill.classList.add('strength-weak');
+            else if (validCount === 2) strengthFill.classList.add('strength-fair');
+            else if (validCount === 3) strengthFill.classList.add('strength-good');
+            else if (validCount === 4) strengthFill.classList.add('strength-strong');
+
+            return validCount === 4;
+        }
+
+        function updateFeedback(elementId, isValid) {
+            const feedback = document.getElementById(elementId);
+            feedback.textContent = isValid ? '✓' : '✗';
+            feedback.className = 'input-feedback ' + (isValid ? 'valid' : 'invalid');
+        }
+
+        function checkFormValidity() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const role = document.getElementById('role').value;
+
+            const isFirstNameValid = firstName.length > 0;
+            const isLastNameValid = lastName.length > 0;
+            const isEmailValid = validateEmail(email);
+            const isUsernameValid = username.length >= 3;
+            const isPasswordValid = updatePasswordStrength(password);
+            const isConfirmPasswordValid = password === confirmPassword && password.length > 0;
+            const isRoleValid = role !== '';
+
+            updateFeedback('firstNameFeedback', isFirstNameValid);
+            updateFeedback('lastNameFeedback', isLastNameValid);
+            updateFeedback('emailFeedback', isEmailValid);
+            updateFeedback('usernameFeedback', isUsernameValid);
+            updateFeedback('passwordFeedback', isPasswordValid);
+            updateFeedback('confirmPasswordFeedback', isConfirmPasswordValid);
+
+            const isFormValid = isFirstNameValid && isLastNameValid && isEmailValid && 
+                              isUsernameValid && isPasswordValid && isConfirmPasswordValid && isRoleValid;
+
+            submitBtn.disabled = !isFormValid;
+            return isFormValid;
+        }
+
+        // Event listeners for real-time validation
+        ['firstName', 'lastName', 'email', 'username', 'password', 'confirmPassword', 'role'].forEach(id => {
+            document.getElementById(id).addEventListener('input', checkFormValidity);
+        });
+
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const firstName = formData.get('firstName').trim();
+            const lastName = formData.get('lastName').trim();
+            const email = formData.get('email').trim();
+            const password = formData.get('password');
+            
+            // Disable submit button during account creation
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Creating Account...';
+            
+            const result = await createNewUser(email, password, firstName, lastName);
+            
+            if (result.success) {
+                // Show success message
+                successMessage.textContent = 'Account created successfully! Redirecting to login...';
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+
+                // Redirect to login page after 2 seconds
+                setTimeout(() => {
+                    window.location.href = 'Login.html';
+                }, 2000);
+            } else {
+                errorMessage.textContent = result.error;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                
+                // Re-enable submit button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>
