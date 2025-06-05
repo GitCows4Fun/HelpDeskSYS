@@ -146,13 +146,13 @@ form.addEventListener('submit', async function(e) {
 	// Disable submit button during account creation
 	const submitButton = e.target.querySelector('button[type="submit"]');
 	submitButton.disabled = true;
-	submitButton.textContent = 'Creating Account...';
+	submitButton.textContent = 'Requesting Account...';
 	
 	const result = await createNewUser(email, password, firstName, lastName);
 	
 	if (result.success) {
 		// Show success message
-		successMessage.textContent = 'Account created successfully! Redirecting to login...';
+		successMessage.textContent = 'Account creation successfully requested! Redirecting to login...';
 		successMessage.style.display = 'block';
 		errorMessage.style.display = 'none';
 
