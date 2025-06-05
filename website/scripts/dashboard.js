@@ -2,28 +2,34 @@
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8008';
 
-// Load current user from sessionStorage
-function getCurrentUser() {
-	const currentUserData = sessionStorage.getItem('currentUser');
-	return currentUserData ? JSON.parse(currentUserData) : null;
+// Load authentication data from localStorage (matching login.js implementation)
+function getAuthKey() {
+	return localStorage.getItem('authKey');
 }
 
-// Check if authentication key has expired (5 minutes as per API spec)
-function isAuthKeyExpired(user) {
-	if (!user || !user.loginTime) return true;
-	const currentTime = new Date().getTime();
-	const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-	return (currentTime - user.loginTime) > fiveMinutes;
+function getUserData() {
+	return {
+		authKey: localStorage.getItem('authKey'),
+		userId: localStorage.getItem('userId'),
+		username: localStorage.getItem('username'),
+		email: localStorage.getItem('userEmail')
+	};
 }
 
-// Check if user is logged in and redirect if not
-const currentUser = getCurrentUser();
-if (!currentUser || isAuthKeyExpired(currentUser)) {
-	sessionStorage.removeItem('currentUser');
-	window.location.href = 'login';
+// Check if user is authenticated and redirect if not
+const authKey = getAuthKey();
+const userData = getUserData();
+
+if (!authKey || !userData.username) {
+	// Clear any invalid authentication data
+	localStorage.removeItem('authKey');
+	localStorage.removeItem('userId');
+	localStorage.removeItem('username');
+	localStorage.removeItem('userEmail');
+	window.location.href = 'Login.html';
 } else {
 	// Display user welcome message
-	document.getElementById('userWelcome').textContent = `Welcome, ${currentUser.username}`;
+	document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
 }
 
 // API function to fetch tickets
@@ -35,7 +41,7 @@ async function fetchTickets() {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
-				key: currentUser.authKey
+				key: authKey
 			})
 		});
 
@@ -43,9 +49,12 @@ async function fetchTickets() {
 			const tickets = await response.json();
 			return { success: true, data: tickets };
 		} else if (response.status === 401) {
-			// Authentication expired
-			sessionStorage.removeItem('currentUser');
-			window.location.href = 'login';
+			// Authentication expired - clear localStorage and redirect
+			localStorage.removeItem('authKey');
+			localStorage.removeItem('userId');
+			localStorage.removeItem('username');
+			localStorage.removeItem('userEmail');
+			window.location.href = 'Login.html';
 			return { success: false, error: 'Session expired' };
 		} else {
 			return { success: false, error: `Server error: ${response.status}` };
@@ -66,16 +75,19 @@ async function createTicket(title, description) {
 			body: JSON.stringify({
 				title: title,
 				description: description,
-				key: currentUser.authKey
+				key: authKey
 			})
 		});
 
 		if (response.status === 201) {
 			return { success: true };
 		} else if (response.status === 401) {
-			// Authentication expired
-			sessionStorage.removeItem('currentUser');
-			window.location.href = 'login';
+			// Authentication expired - clear localStorage and redirect
+			localStorage.removeItem('authKey');
+			localStorage.removeItem('userId');
+			localStorage.removeItem('username');
+			localStorage.removeItem('userEmail');
+			window.location.href = 'Login.html';
 			return { success: false, error: 'Session expired' };
 		} else if (response.status === 400) {
 			return { success: false, error: 'Invalid ticket data provided' };
@@ -212,8 +224,11 @@ function viewTicket(index) {
 // Logout function
 function logout() {
 	if (confirm('Are you sure you want to logout?')) {
-		sessionStorage.removeItem('currentUser');
-		window.location.href = 'Login.html';
+		localStorage.removeItem('authKey');
+		localStorage.removeItem('userId');
+		localStorage.removeItem('username');
+		localStorage.removeItem('userEmail');
+		window.location.href = 'login';
 	}
 }
 
