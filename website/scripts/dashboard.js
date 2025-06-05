@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		return;
 	}
 
-<<<<<<< HEAD
 // Add debugging to see what values we have
 console.log('Auth Key:', authKey);
 console.log('User Data:', userData);
@@ -43,13 +42,11 @@ if (!authKey || !userData.username) {
     window.location.href = 'login.html';
 } else {
 	// Display user welcome message
-=======
->>>>>>> 91d25043cbc16a969c017faeb2119d4c002d4790
 	document.getElementById('userWelcome').textContent = `Welcome, ${userData.username}`;
 
 	// Now safe to call functions that use authKey
 	loadTickets();
-});
+};
 
 // API function to fetch tickets
 async function fetchTickets() {
@@ -273,3 +270,4 @@ window.onclick = function(event) {
 		closeAddTicketModal();
 	}
 }
+});
