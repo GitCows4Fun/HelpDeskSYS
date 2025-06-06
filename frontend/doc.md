@@ -1,17 +1,33 @@
 # Server endpoints  
 
+Endpoints marked with `¤` have their fields tested for SQL injection.  
+Any of the following will have the request blocked:
+
+```py
+'chars': [';', '\\', '*', '`', '$', '#', '!', '{', '}', '(', ')', ' ', '"', "'", '-', '/'],
+'keywords': ['EXEC', 'SELECT', 'WHERE', 'LIKE', 'HAVING', 'OFFSET', 'INSERT', 'DELETE', 'CREATE', 'DROP', 'GRANT', 'REVOKE', 'UNION']
+```  
+
+and email fields have to pass the following regex as well:
+
+```re
+^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})*$
+```  
+
+Additionally, response strings
+
 ## API Endpoints
 
 ### POST Endpoints
 
-1. `/api/0/POST/login`
+1. `/api/0/POST/login` ¤
    - Handles login requests
    - Expects JSON with `email` and `password_hash` formatted as:
      - `[{"email": "name@somewhere"}, {"pw_hash": "<>"}]`  
    - Returns auth key and expiration time as:
      - `[true, 200, {"userid": 0, "auth_key": "xxxxxxxxxxxxxxxxxxxx", "expires_in": 300}]`  
 
-2. `/api/0/POST/data`
+2. `/api/0/POST/data` ¤
    - Handles ticket creation
    - Expects JSON with `key`, `title`, and `description` as:  
      - `[{"title": "some stuff"}, {"description": "long string"}, {"key": "<>"}]`  
@@ -19,7 +35,7 @@
    - Responds with:  
      - `[false, 401, "Invalid or expired key"]`  
 
-3. `/api/0/POST/newuser`
+3. `/api/0/POST/newuser` ¤
    - Handles new user requests
    - Expects JSON with `email`, `pw_hash` as:  
      - `[{"email": "name@somewhere"}, {"pw_hash": "<>"}, {"commonName": "something something"}]`  
@@ -29,7 +45,7 @@
 
 ### GET Endpoints
 
-1. `/api/0/GET/data?key=<auth_key>`
+1. `/api/0/GET/data?key=<auth_key>` ¤
    - Returns list of support tickets as:  
      - `[true, 200, [{"ticketID": 1, "userID": 1, "title": "Some", "description": "strings"},<REPEAT>]]`  
    - Requires valid auth key in query parameter

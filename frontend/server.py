@@ -367,21 +367,7 @@ class apiHandler(str):
 
 		logger(target, "GET ticket request URI")
 
-		# if target.startswith('data'):
-		# 	try:
-		# 		key = target.removeprefix('data?key=')
-		# 		if not key:
-		# 			return [False, 400, "Missing auth key"]
-		# 	except Exception as e:
-		# 		return [False, 400, str(e)]
-
-		if target.startswith("data"):
-			try:
-				key = target.removeprefix('data?key=')
-				if not key:
-					return [False, 400, "Missing auth key"]
-			except Exception as e:
-				return [False, 400, str(e)]
+		
 
 			# Validate key
 			key_valid = VerificationTracker.checkKeyValidity(key)
