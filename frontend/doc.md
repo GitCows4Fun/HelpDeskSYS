@@ -47,7 +47,7 @@
 3. `/style`, `/script`, and other static files
    - Serves static content from respective directories within the website folder
 
-4. Other paths like `/about`, `/contact`, etc. which dont include a '.'
+4. Other paths like `/about`, `/contact`, etc. which dont include a `.`  
    - Serves corresponding HTML files if they exist
 
 ## Return codes
