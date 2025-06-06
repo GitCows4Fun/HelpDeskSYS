@@ -1,4 +1,4 @@
-# Here's an overview of the HTTP server's endpoints based on the code:​  
+# Server endpoints  
 
 ## API Endpoints
 
