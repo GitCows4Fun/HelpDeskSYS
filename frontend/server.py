@@ -367,7 +367,15 @@ class apiHandler(str):
 
 		logger(target, "GET ticket request URI")
 
-		if target.startswith('data'):
+		# if target.startswith('data'):
+		# 	try:
+		# 		key = target.removeprefix('data?key=')
+		# 		if not key:
+		# 			return [False, 400, "Missing auth key"]
+		# 	except Exception as e:
+		# 		return [False, 400, str(e)]
+
+		if target.startswith("data"):
 			try:
 				key = target.removeprefix('data?key=')
 				if not key:
@@ -411,7 +419,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 			logger([418, self.wfile], "POST response")
 
 		else:
-			# Serve index.html for root
+			# Serve dashboard.html for root
 			if self.path == ('/' or ''):
 				self.send_response(200)
 				self.send_header('Content-type', 'text/html')
